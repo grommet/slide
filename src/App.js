@@ -5,9 +5,9 @@ import { grommet } from 'grommet/themes';
 import { Close, Edit, Next, Previous } from 'grommet-icons';
 import React, { Component, Fragment } from 'react';
 
-const textToSlides = text => text.split('#').slice(1).map(s => `#${s}`);
+const textToSlides = text => text.split(/\s# /).map((s, i) => i ? `# ${s}` : s);
 
-const initialText = '# Title 1\n\n- first\n- second\n\n# Title 2\n';
+const initialText = '# Hot\n\n- first\n- second\n\n# Frosty\n';
 const initialSlides = textToSlides(initialText);
 
 const editControl = {
@@ -55,6 +55,10 @@ class App extends Component {
     document.removeEventListener('touchmove', this.onTouchMove);
     document.removeEventListener('touchend', this.onTouchEnd);
     document.removeEventListener('touchcancel', this.onTouchCancel);
+  }
+
+  loadImages = () => {
+    // TODO
   }
 
   onTouchStart = (event) => {
