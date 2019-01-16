@@ -2,7 +2,8 @@ import {
   Box, Button, Grommet, Keyboard, Markdown, ResponsiveContext, TextArea,
 } from 'grommet';
 import { grommet } from 'grommet/themes';
-import { Close, Edit, Next, Previous } from 'grommet-icons';
+import { Close, Copy, Edit, Next, Previous } from 'grommet-icons';
+import LZString from 'lz-string';
 import React, { Component, Fragment } from 'react';
 
 const textToSlides = text => text.split(/\s# /).map((s, i) => i ? `# ${s}` : s);
@@ -37,24 +38,39 @@ const createTouch = (event) => {
 class App extends Component {
   state = {
     current: 0,
-    mode: 'edit',
+    mode: 'view',
     slides: initialSlides,
     text: initialText,
   }
 
   componentDidMount () {
-    document.addEventListener('touchstart', this.onTouchStart);
-    document.addEventListener('touchmove', this.onTouchMove);
-    document.addEventListener('touchend', this.onTouchEnd);
-    document.addEventListener('touchcancel', this.onTouchCancel);
+    const { addEventListener, location } = document;
+    addEventListener('touchstart', this.onTouchStart);
+    addEventListener('touchmove', this.onTouchMove);
+    addEventListener('touchend', this.onTouchEnd);
+    addEventListener('touchcancel', this.onTouchCancel);
+
+    // load text from URL, or local storage, if any
+    const params = {};
+    location.search.slice(1).split('&').forEach(p => {
+      const [k, v] = p.split('=');
+      params[k] = v;
+    });
+    const encodedText = params.t || window.localStorage.getItem('text');
+    if (encodedText) {
+      const text = LZString.decompressFromEncodedURIComponent(encodedText);
+      const slides = textToSlides(text);
+      this.setState({ text, slides });
+    }
   }
 
   componentWillUnmount () {
+    const { removeEventListener } = document;
     clearTimeout(this.timer);
-    document.removeEventListener('touchstart', this.onTouchStart);
-    document.removeEventListener('touchmove', this.onTouchMove);
-    document.removeEventListener('touchend', this.onTouchEnd);
-    document.removeEventListener('touchcancel', this.onTouchCancel);
+    removeEventListener('touchstart', this.onTouchStart);
+    removeEventListener('touchmove', this.onTouchMove);
+    removeEventListener('touchend', this.onTouchEnd);
+    removeEventListener('touchcancel', this.onTouchCancel);
   }
 
   loadImages = () => {
@@ -99,7 +115,9 @@ class App extends Component {
   onChange = event => {
     const text = event.target.value;
     const slides = textToSlides(text);
-    this.setState({ slides, text })
+    this.setState({ slides, text }, () => {
+      window.localStorage.setItem('text', LZString.compressToEncodedURIComponent(text))
+    });
   }
 
   onNext = () => {
@@ -112,7 +130,7 @@ class App extends Component {
     this.setState({ current: Math.max(current - 1, 0)});
   }
 
-  renderControls = (mode, responsiveSize) => {
+  renderControls = (mode, responsiveSize, text) => {
     const EditControlIcon = editControl[mode].Icon;
     return (
       <Box
@@ -123,7 +141,6 @@ class App extends Component {
         background="dark-1"
       >
         <Button
-          alignSelf="start"
           icon={<EditControlIcon />}
           hoverIndicator
           onClick={() => this.setState({ mode: editControl[mode].mode })}
@@ -152,7 +169,11 @@ class App extends Component {
           )}
         </Box>
 
-        <Box basis="xxsmall" />
+        <Button
+          icon={<Copy />}
+          hoverIndicator
+          href={`?t=${LZString.compressToEncodedURIComponent(text)}`}
+        />
       </Box>
     );
   }
@@ -167,7 +188,7 @@ class App extends Component {
           {(responsiveSize) => (
             <Box fill>
               {responsiveSize !== 'small' &&
-                this.renderControls(mode, responsiveSize)}
+                this.renderControls(mode, responsiveSize, text)}
               <Box flex={true} direction="row">
                 {mode !== 'view' && (
                   <Box basis="medium">
@@ -175,15 +196,18 @@ class App extends Component {
                   </Box>
                 )}
                 <Box {...viewContainerProps[mode]} overflow="hidden">
-                  <Keyboard target="document" onLeft={this.onPrevious} onRight={this.onNext}>
-                    <Box fill pad="xlarge" background={`accent-${(current % 3) + 1}`}>
+                  <Keyboard
+                    onLeft={this.onPrevious}
+                    onRight={this.onNext}
+                  >
+                    <Box tabIndex="-1" fill pad="xlarge" background={`accent-${(current % 3) + 1}`}>
                       <Markdown>{slides[current]}</Markdown>
                     </Box>
                   </Keyboard>
                 </Box>
               </Box>
               {responsiveSize === 'small' &&
-                this.renderControls(mode, responsiveSize)}
+                this.renderControls(mode, responsiveSize, text)}
             </Box>
           )}
         </ResponsiveContext.Consumer>
