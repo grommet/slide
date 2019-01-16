@@ -20,12 +20,76 @@ const viewContainerProps = {
   view: { flex: true },
 };
 
+const createTouch = (event) => {
+  if (event.changedTouches.length === 1) {
+    const touch = event.changedTouches.item(0);
+    if (touch) {
+      return {
+        at: (new Date()).getTime(),
+        x: touch.pageX,
+        y: touch.pageY,
+      };
+    }
+  }
+  return undefined;
+}
+
 class App extends Component {
   state = {
     current: 0,
     mode: 'edit',
     slides: initialSlides,
     text: initialText,
+  }
+
+  componentDidMount () {
+    document.addEventListener('touchstart', this.onTouchStart);
+    document.addEventListener('touchmove', this.onTouchMove);
+    document.addEventListener('touchend', this.onTouchEnd);
+    document.addEventListener('touchcancel', this.onTouchCancel);
+  }
+
+  componentWillUnmount () {
+    clearTimeout(this.timer);
+    document.removeEventListener('touchstart', this.onTouchStart);
+    document.removeEventListener('touchmove', this.onTouchMove);
+    document.removeEventListener('touchend', this.onTouchEnd);
+    document.removeEventListener('touchcancel', this.onTouchCancel);
+  }
+
+  onTouchStart = (event) => {
+    event.preventDefault();
+    this.touchStart = createTouch(event);
+  }
+
+  onTouchMove = (event) => {
+    event.preventDefault();
+  }
+
+  onTouchEnd = (event) => {
+    if (this.touchStart) {
+      const touchEnd = createTouch(event);
+      if (touchEnd) {
+        const delta = {
+          at: (touchEnd.at - this.touchStart.at),
+          x: (touchEnd.x - this.touchStart.x),
+          y: (touchEnd.y - this.touchStart.y),
+        }
+
+        if (Math.abs(delta.y) < 100 && delta.at < 200) {
+          if (delta.x > 100) {
+            this.onPrevious();
+          } else if (delta.x < -100) {
+            this.onNext();
+          }
+        }
+      }
+      this.touchStart = undefined;
+    }
+  }
+
+  onTouchCancel = (event) => {
+    this.touchStart = undefined;
   }
 
   onChange = event => {
