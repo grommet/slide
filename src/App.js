@@ -1,5 +1,5 @@
 import {
-  Box, Button, Grommet, Keyboard, Markdown, ResponsiveContext, TextArea,
+  Box, Button, Grommet, Keyboard, Markdown, Paragraph, ResponsiveContext, TextArea,
 } from 'grommet';
 import { grommet } from 'grommet/themes';
 import { Close, Copy, Edit, Next, Previous } from 'grommet-icons';
@@ -128,7 +128,8 @@ class App extends Component {
       return false;
     });
     this.setState({ current, slides, text }, () => {
-      window.localStorage.setItem('text', LZString.compressToEncodedURIComponent(text))
+      window.localStorage.setItem(
+        'text', LZString.compressToEncodedURIComponent(text));
     });
   }
 
@@ -198,7 +199,18 @@ class App extends Component {
 
   render() {
     const { current, mode, slides, text } = this.state;
-
+    const slide = slides[current].trim();
+    const size = (slide.length < 10) ? 'xlarge' : 'large';
+    const textAlign = (slide.indexOf("\n") === -1) ? 'center' : 'start';
+    const components = {
+      h1: { props: { textAlign, size } },
+      h2: { props: { textAlign, size } },
+      h3: { props: { textAlign, size } },
+      p: { props: { textAlign, size } },
+      ul: { component: Box, props: { style: { margin: 0 } } },
+      ol: { component: Box, props: { style: { margin: 0 } } },
+      li: { component: Paragraph, props: { as: 'li', size } },
+    };
 
     return (
       <Grommet full theme={grommet}>
@@ -218,8 +230,15 @@ class App extends Component {
                     onLeft={this.onPrevious}
                     onRight={this.onNext}
                   >
-                    <Box tabIndex="-1" fill pad="xlarge" background={`accent-${(current % 3) + 1}`}>
-                      <Markdown>{slides[current]}</Markdown>
+                    <Box
+                      tabIndex="-1"
+                      fill
+                      pad="xlarge"
+                      background={`accent-${(current % 3) + 1}`}
+                    >
+                      <Markdown components={components}>
+                        {slide}
+                      </Markdown>
                     </Box>
                   </Keyboard>
                 </Box>
