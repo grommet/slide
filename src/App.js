@@ -1,43 +1,29 @@
 import {
-  Box, Button, Grommet, Keyboard, Markdown, TextArea,
+  Box, Button, Grommet, Keyboard, Markdown, ResponsiveContext, TextArea,
 } from 'grommet';
 import { grommet } from 'grommet/themes';
 import { Close, Edit, Next, Previous } from 'grommet-icons';
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 
 const textToSlides = text => text.split('#').slice(1).map(s => `#${s}`);
 
 const initialText = '# Title 1\n\n- first\n- second\n\n# Title 2\n';
 const initialSlides = textToSlides(initialText);
 
-const editContainerProps = {
-  both: { basis: 'medium', flex: false },
-  edit: { flex: true },
-  view: { basis: 'xxsmall', flex: false },
-};
-
 const editControl = {
-  both: { Icon: Close, mode: 'view' },
-  edit: { Icon: Previous, mode: 'both' },
-  view: { Icon: Edit, mode: 'both' },
+  edit: { Icon: Close, mode: 'view' },
+  view: { Icon: Edit, mode: 'edit' },
 };
 
 const viewContainerProps = {
-  both: { flex: true },
-  edit: { basis: 'xxsmall', flex: false },
+  edit: { flex: true },
   view: { flex: true },
-};
-
-const viewControl = {
-  both: { Icon: Previous, mode: 'view' },
-  edit: { Icon: Previous, mode: 'both' },
-  view: { Icon: Next, mode: 'both' },
 };
 
 class App extends Component {
   state = {
     current: 0,
-    mode: 'both',
+    mode: 'edit',
     slides: initialSlides,
     text: initialText,
   }
@@ -58,56 +44,81 @@ class App extends Component {
     this.setState({ current: Math.max(current - 1, 0)});
   }
 
+  renderControls = (mode, responsiveSize) => {
+    const EditControlIcon = editControl[mode].Icon;
+    return (
+      <Box
+        flex={false}
+        direction="row"
+        align="center"
+        justify="between"
+        background="dark-1"
+      >
+        <Button
+          alignSelf="start"
+          icon={<EditControlIcon />}
+          hoverIndicator
+          onClick={() => this.setState({ mode: editControl[mode].mode })}
+        />
+
+        <Box
+          flex={false}
+          direction="row"
+          justify="center"
+          align="center"
+          background="dark-1"
+        >
+          {(mode !== 'edit' || responsiveSize !== 'small') && (
+            <Fragment>
+              <Button
+                icon={<Previous />}
+                hoverIndicator
+                onClick={this.onPrevious}
+              />
+              <Button
+                icon={<Next />}
+                hoverIndicator
+                onClick={this.onNext}
+              />
+            </Fragment>
+          )}
+        </Box>
+
+        <Box basis="xxsmall" />
+      </Box>
+    );
+  }
+
   render() {
     const { current, mode, slides, text } = this.state;
-    const EditControlIcon = editControl[mode].Icon;
-    const ViewControlIcon = viewControl[mode].Icon;
+
+
     return (
       <Grommet full theme={grommet}>
-        <Box fill>
-          <Box flex={true} direction="row">
-            <Box {...editContainerProps[mode]} background="dark-1">
-              <Box flex={false}>
-                <Button
-                  alignSelf="start"
-                  icon={<EditControlIcon />}
-                  hoverIndicator
-                  onClick={() => this.setState({ mode: editControl[mode].mode })}
-                />
-              </Box>
-              {mode !== 'view' && (
-                <TextArea fill value={text} onChange={this.onChange} />
-              )}
-            </Box>
-            <Box {...viewContainerProps[mode]} overflow="hidden">
-              <Box
-                flex={false}
-                direction="row"
-                justify="center"
-                align="center"
-                background="dark-1"
-              >
-                <Button
-                  icon={<Previous />}
-                  hoverIndicator
-                  onClick={this.onPrevious}
-                />
-                <Button
-                  icon={<Next />}
-                  hoverIndicator
-                  onClick={this.onNext}
-                />
-              </Box>
-              {mode !== 'edit' && (
-                <Keyboard target="document" onLeft={this.onPrevious} onRight={this.onNext}>
-                  <Box fill pad="xlarge" background={`accent-${(current % 3) + 1}`}>
-                    <Markdown>{slides[current]}</Markdown>
+        <ResponsiveContext.Consumer>
+          {(responsiveSize) => (
+            <Box fill>
+              {responsiveSize !== 'small' &&
+                this.renderControls(mode, responsiveSize)}
+              <Box flex={true} direction="row">
+                {mode !== 'view' && (
+                  <Box basis="medium">
+                    <TextArea fill value={text} onChange={this.onChange} />
                   </Box>
-                </Keyboard>
-              )}
+                )}
+                <Box {...viewContainerProps[mode]} overflow="hidden">
+                  <Keyboard target="document" onLeft={this.onPrevious} onRight={this.onNext}>
+                    <Box fill pad="xlarge" background={`accent-${(current % 3) + 1}`}>
+                      <Markdown>{slides[current]}</Markdown>
+                    </Box>
+                  </Keyboard>
+                </Box>
+              </Box>
+              {responsiveSize === 'small' &&
+                this.renderControls(mode, responsiveSize)}
             </Box>
-          </Box>
-        </Box>
+          )}
+        </ResponsiveContext.Consumer>
       </Grommet>
     );
   }
