@@ -62,6 +62,8 @@ class App extends Component {
       const slides = textToSlides(text);
       this.setState({ text, slides });
     }
+    const mode = window.localStorage.getItem('mode') || this.state.mode;
+    this.setState({ mode });
   }
 
   componentWillUnmount () {
@@ -113,9 +115,19 @@ class App extends Component {
   }
 
   onChange = event => {
+    const { slides: priorSlides } = this.state;
     const text = event.target.value;
     const slides = textToSlides(text);
-    this.setState({ slides, text }, () => {
+    let { current } = this.state;
+    slides.some((s, i) => {
+      const prior = priorSlides[i];
+      if (!prior || prior.length !== s.length) {
+        current = i;
+        return true;
+      }
+      return false;
+    });
+    this.setState({ current, slides, text }, () => {
       window.localStorage.setItem('text', LZString.compressToEncodedURIComponent(text))
     });
   }
@@ -128,6 +140,12 @@ class App extends Component {
   onPrevious = () => {
     const { current } = this.state;
     this.setState({ current: Math.max(current - 1, 0)});
+  }
+
+  onChangeMode = (mode) => {
+    this.setState({ mode }, () => {
+      window.localStorage.setItem('mode', mode)
+    });
   }
 
   renderControls = (mode, responsiveSize, text) => {
@@ -143,7 +161,7 @@ class App extends Component {
         <Button
           icon={<EditControlIcon />}
           hoverIndicator
-          onClick={() => this.setState({ mode: editControl[mode].mode })}
+          onClick={() => this.onChangeMode(editControl[mode].mode)}
         />
 
         <Box
