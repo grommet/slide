@@ -2,7 +2,7 @@ import {
   Box, Button, Grommet, Keyboard, Markdown, Paragraph, ResponsiveContext, TextArea,
 } from 'grommet';
 import { grommet } from 'grommet/themes';
-import { Close, Copy, Edit, Next, Previous } from 'grommet-icons';
+import { Close, Edit, Next, Previous, Share } from 'grommet-icons';
 import LZString from 'lz-string';
 import React, { Component, Fragment } from 'react';
 
@@ -169,6 +169,10 @@ class App extends Component {
     this.setState({ current, slides, text }, () => {
       window.localStorage.setItem(
         'text', LZString.compressToEncodedURIComponent(text));
+      // clear any text in the browser location when editing
+      if (window.location.search) {
+        window.history.pushState(null, '', '/');
+      }
     });
   }
 
@@ -197,6 +201,7 @@ class App extends Component {
         align="center"
         justify="between"
         background="dark-1"
+        style={responsiveSize === 'small' ? { justifyContent: 'space-around' } : undefined}
       >
         <Button
           icon={<EditControlIcon />}
@@ -228,8 +233,10 @@ class App extends Component {
         </Box>
 
         <Button
-          icon={<Copy />}
+          icon={<Share />}
           hoverIndicator
+          target="_blank"
+          rel="noopener noreferrer"
           href={`?t=${LZString.compressToEncodedURIComponent(text)}`}
         />
       </Box>
