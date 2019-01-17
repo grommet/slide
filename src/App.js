@@ -181,6 +181,11 @@ class App extends Component {
         window.history.pushState(null, '', '/');
       }
     });
+    // delay loading images to avoid too many requests and ride out user typing
+    clearTimeout(this.loadTimer);
+    this.loadTimer = setTimeout(() => {
+      this.loadImages();
+    }, 5000); // 5s empircally determined
   }
 
   onNext = () => {
