@@ -1,6 +1,6 @@
 import {
   Box, Button, Grommet, Heading, Keyboard, Markdown, Paragraph,
-  ResponsiveContext, TextArea,
+  ResponsiveContext, Text, TextArea,
 } from 'grommet';
 import { grommet } from 'grommet/themes';
 import { Close, Edit, Next, Previous, Share } from 'grommet-icons';
@@ -81,7 +81,7 @@ class App extends Component {
 
   componentWillUnmount () {
     const { removeEventListener } = document;
-    clearTimeout(this.timer);
+    clearTimeout(this.loadTimer);
     removeEventListener('touchstart', this.onTouchStart);
     removeEventListener('touchmove', this.onTouchMove);
     removeEventListener('touchend', this.onTouchEnd);
@@ -173,7 +173,7 @@ class App extends Component {
       }
       return false;
     });
-    this.setState({ current, slides, text }, () => {
+    this.setState({ current, slides, text, editing: true }, () => {
       window.localStorage.setItem(
         'text', LZString.compressToEncodedURIComponent(text));
       // clear any text in the browser location when editing
@@ -185,6 +185,8 @@ class App extends Component {
     clearTimeout(this.loadTimer);
     this.loadTimer = setTimeout(() => {
       this.loadImages();
+      this.loadTimer = null;
+      this.setState({ editing: false });
     }, 5000); // 5s empircally determined
   }
 
@@ -256,7 +258,7 @@ class App extends Component {
   }
 
   render() {
-    const { current, images, mode, slides, text } = this.state;
+    const { current, editing, images, mode, slides, text } = this.state;
     const slide = slides[current].trim();
     const size = (slide.length < 10) ? 'xlarge' : 'large';
     const textAlign = (slide.indexOf("\n") === -1) ? 'center' : 'start';
@@ -298,7 +300,20 @@ class App extends Component {
               <Box flex={true} direction="row">
                 {mode !== 'view' && (
                   <Box basis="medium">
-                    <TextArea fill value={text} onChange={this.onChange} />
+                    <Box flex={true}>
+                      <TextArea fill value={text} onChange={this.onChange} />
+                    </Box>
+                    {editing && (
+                      <Box pad="xsmall" animation={{ type: 'pulse', size: 'small' }}>
+                        <Text
+                          size="small"
+                          color="dark-5"
+                          textAlign="center"
+                        >
+                          waiting for typing to pause
+                        </Text>
+                      </Box>
+                    )}
                   </Box>
                 )}
                 <Box {...viewContainerProps[mode]} overflow="hidden">
