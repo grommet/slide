@@ -267,8 +267,8 @@ class App extends Component {
       h2: { props: { textAlign, size } },
       h3: { props: { textAlign, size } },
       p: { props: { textAlign, size } },
-      ul: { component: Box, props: { style: { margin: 0 } } },
-      ol: { component: Box, props: { style: { margin: 0 } } },
+      ul: { component: Box, props: { as: 'ul', margin: { left: 'medium' } } },
+      ol: { component: Box, props: { as: 'ol', margin: { left: 'medium' } } },
       li: { component: Paragraph, props: { as: 'li', size } },
     };
 
