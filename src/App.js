@@ -1,5 +1,6 @@
 import {
-  Box, Button, Grommet, Keyboard, Markdown, Paragraph, ResponsiveContext, TextArea,
+  Box, Button, Grommet, Heading, Keyboard, Markdown, Paragraph,
+  ResponsiveContext, TextArea,
 } from 'grommet';
 import { grommet } from 'grommet/themes';
 import { Close, Edit, Next, Previous, Share } from 'grommet-icons';
@@ -39,6 +40,12 @@ const createTouch = (event) => {
   }
   return undefined;
 }
+
+const LightBox = props => (
+  <Box pad="large" background={{ color: 'dark-3', opacity: 'medium' }}>
+    <Heading {...props} margin="none" />
+  </Box>
+);
 
 class App extends Component {
   state = {
@@ -270,6 +277,11 @@ class App extends Component {
       lines.splice(1, 1);
       content = lines.join("\n");
     }
+    const singleWordImage =
+      (lines.length === 1 && background.slice(0, 4) === 'url(');
+    if (singleWordImage) {
+      components.h1.component = LightBox;
+    }
 
     return (
       <Grommet full theme={grommet}>
@@ -294,6 +306,8 @@ class App extends Component {
                       fill
                       pad="xlarge"
                       background={background}
+                      justify={singleWordImage ? 'center' : undefined}
+                      align={singleWordImage ? 'center' : undefined}
                     >
                       <Markdown components={components}>
                         {content}
