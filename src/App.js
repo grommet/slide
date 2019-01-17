@@ -11,6 +11,11 @@ const textToSlides = text => text.split(/\s# /).map((s, i) => i ? `# ${s}` : s);
 const initialText = '# Hot\n\n- first\n- second\n\n# Frosty\n';
 const initialSlides = textToSlides(initialText);
 
+const UNSPLASH_API_KEY = process.env.REACT_APP_UNSPLASH_API_KEY;
+if (!UNSPLASH_API_KEY) {
+  console.error("Missing UNSPLASH_API_KEY");
+}
+
 const editControl = {
   edit: { Icon: Close, mode: 'view' },
   view: { Icon: Edit, mode: 'edit' },
@@ -38,6 +43,7 @@ const createTouch = (event) => {
 class App extends Component {
   state = {
     current: 0,
+    images: [],
     mode: 'view',
     slides: initialSlides,
     text: initialText,
@@ -60,7 +66,7 @@ class App extends Component {
     if (encodedText) {
       const text = LZString.decompressFromEncodedURIComponent(encodedText);
       const slides = textToSlides(text);
-      this.setState({ text, slides });
+      this.setState({ text, slides }, this.loadImages);
     }
     const mode = window.localStorage.getItem('mode') || this.state.mode;
     this.setState({ mode });
@@ -76,7 +82,40 @@ class App extends Component {
   }
 
   loadImages = () => {
-    // TODO
+    const { images, slides } = this.state;
+    const nextImages = images.slice(0);
+    slides.forEach((s, i) => {
+      const match = s.match(/^# (\w+)\s*$/);
+      if (match) {
+        const name = match[1];
+        nextImages[i] = this.loadImage(name, i);
+      }
+    });
+    this.setState({ images: nextImages });
+  }
+
+  loadImage = (name, index) => {
+    const url = window.localStorage.getItem(`image-${name}`);
+    if (!url) {
+      fetch(
+        `https://api.unsplash.com/search/photos?query=${name}&per_page=1`,
+        {
+          headers: {
+            "method": "GET",
+            "Accept-Version": "v1",
+            "Authorization": `Client-ID ${UNSPLASH_API_KEY}`,
+          },
+        })
+          .then(response => response.json())
+          .then(response => {
+            const url = `url(${response.results[0].urls.regular})`;
+            window.localStorage.setItem(`image-${name}`, url);
+            const images = this.state.images.slice(0);
+            images[index] = url;
+            this.setState({ images });
+          });
+    }
+    return url;
   }
 
   onTouchStart = (event) => {
@@ -198,7 +237,7 @@ class App extends Component {
   }
 
   render() {
-    const { current, mode, slides, text } = this.state;
+    const { current, images, mode, slides, text } = this.state;
     const slide = slides[current].trim();
     const size = (slide.length < 10) ? 'xlarge' : 'large';
     const textAlign = (slide.indexOf("\n") === -1) ? 'center' : 'start';
@@ -211,6 +250,19 @@ class App extends Component {
       ol: { component: Box, props: { style: { margin: 0 } } },
       li: { component: Paragraph, props: { as: 'li', size } },
     };
+
+    // if second line of slide is an image, make it the background,
+    // and remove from markdown content
+    const lines = slide.split("\n");
+    const secondLine = lines[1] || '';
+    const match = secondLine.match(/^!\[.*\]\((.+)\)$/);
+    let content = slide;
+    let background = images[current] || `accent-${(current % 3) + 1}`;
+    if (match) {
+      background = `url(${match[1]})`;
+      lines.splice(1, 1);
+      content = lines.join("\n");
+    }
 
     return (
       <Grommet full theme={grommet}>
@@ -234,10 +286,10 @@ class App extends Component {
                       tabIndex="-1"
                       fill
                       pad="xlarge"
-                      background={`accent-${(current % 3) + 1}`}
+                      background={background}
                     >
                       <Markdown components={components}>
-                        {slide}
+                        {content}
                       </Markdown>
                     </Box>
                   </Keyboard>
