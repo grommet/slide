@@ -1,5 +1,5 @@
 import {
-  Box, Button, Grommet, Heading, Keyboard, Markdown, Paragraph,
+  Box, Button, Grommet, Keyboard, Markdown, Paragraph,
   ResponsiveContext, Text, TextArea,
 } from 'grommet';
 import { grommet } from 'grommet/themes';
@@ -42,9 +42,11 @@ const createTouch = (event) => {
 }
 
 const LightBox = props => (
-  <Box pad="large" background={{ color: 'dark-3', opacity: 'medium' }}>
-    <Heading {...props} margin="none" />
-  </Box>
+  <Box
+    pad={{ horizontal: "large" }}
+    background={{ color: 'dark-3', opacity: 'medium' }}
+    {...props}
+  />
 );
 
 class App extends Component {
@@ -96,6 +98,8 @@ class App extends Component {
       if (match) {
         const name = match[1];
         nextImages[i] = this.loadImage(name, i);
+      } else {
+        delete nextImages[i];
       }
     });
     this.setState({ images: nextImages });
@@ -115,11 +119,13 @@ class App extends Component {
         })
           .then(response => response.json())
           .then(response => {
-            const url = `url(${response.results[0].urls.regular})`;
-            window.localStorage.setItem(`image-${name}`, url);
-            const images = this.state.images.slice(0);
-            images[index] = url;
-            this.setState({ images });
+            if (response.results.length > 0) {
+              const url = `url(${response.results[0].urls.regular})`;
+              window.localStorage.setItem(`image-${name}`, url);
+              const images = this.state.images.slice(0);
+              images[index] = url;
+              this.setState({ images });
+            }
           });
     }
     return url;
@@ -213,9 +219,8 @@ class App extends Component {
         flex={false}
         direction="row"
         align="center"
-        justify="between"
+        justify={responsiveSize === 'small' ? 'around' : 'between'}
         background="dark-1"
-        style={responsiveSize === 'small' ? { justifyContent: 'space-around' } : undefined}
       >
         <Button
           icon={<EditControlIcon />}
@@ -284,10 +289,11 @@ class App extends Component {
       lines.splice(1, 1);
       content = lines.join("\n");
     }
-    const singleWordImage =
-      (lines.length === 1 && background.slice(0, 4) === 'url(');
-    if (singleWordImage) {
-      components.h1.component = LightBox;
+    content = <Markdown components={components}>{content}</Markdown>;
+
+    const backgroundImage = (background.slice(0, 4) === 'url(');
+    if (backgroundImage) {
+      content = <LightBox>{content}</LightBox>
     }
 
     return (
@@ -326,12 +332,10 @@ class App extends Component {
                       fill
                       pad="xlarge"
                       background={background}
-                      justify={singleWordImage ? 'center' : undefined}
-                      align={singleWordImage ? 'center' : undefined}
+                      justify={backgroundImage ? 'center' : undefined}
+                      align={backgroundImage ? 'center' : undefined}
                     >
-                      <Markdown components={components}>
-                        {content}
-                      </Markdown>
+                      {content}
                     </Box>
                   </Keyboard>
                 </Box>
