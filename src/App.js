@@ -1,219 +1,217 @@
 import {
   Box, Button, Grommet, Keyboard, Markdown, Paragraph,
-  ResponsiveContext, Text, TextArea,
-} from 'grommet';
-import { grommet } from 'grommet/themes';
-import { Close, Edit, Next, Previous, Share } from 'grommet-icons';
-import LZString from 'lz-string';
-import React, { Component, Fragment } from 'react';
+  ResponsiveContext, TextArea,
+} from 'grommet'
+import { grommet } from 'grommet/themes'
+import { Close, Edit, Next, Previous, Share } from 'grommet-icons'
+import LZString from 'lz-string'
+import React, { Fragment } from 'react'
 
-const textToSlides = text => text.split(/\s# /).map((s, i) => i ? `# ${s}` : s);
+const textToSlides = text => text.split(/\s# /).map((s, i) => i ? `# ${s}` : s)
 
-const initialText = '# Hot\n\n- first\n- second\n\n# Frosty\n';
-const initialSlides = textToSlides(initialText);
+const initialText = '# Hot\n\n- first\n- second\n\n# Frosty\n'
+const initialSlides = textToSlides(initialText)
 
-const UNSPLASH_API_KEY = process.env.REACT_APP_UNSPLASH_API_KEY;
+const UNSPLASH_API_KEY = process.env.REACT_APP_UNSPLASH_API_KEY
 if (!UNSPLASH_API_KEY) {
-  console.error("Missing UNSPLASH_API_KEY");
+  console.error("Missing UNSPLASH_API_KEY")
 }
 
 const editControl = {
   edit: { Icon: Close, mode: 'view' },
   view: { Icon: Edit, mode: 'edit' },
-};
+}
 
 const viewContainerProps = {
   edit: { flex: true },
   view: { flex: true },
-};
+}
 
 const createTouch = (event) => {
   if (event.changedTouches.length === 1) {
-    const touch = event.changedTouches.item(0);
+    const touch = event.changedTouches.item(0)
     if (touch) {
       return {
         at: (new Date()).getTime(),
         x: touch.pageX,
         y: touch.pageY,
-      };
+      }
     }
   }
-  return undefined;
+  return undefined
 }
 
 const LightBox = props => (
   <Box
     pad={{ horizontal: "large" }}
     background={{ color: 'dark-3', opacity: 'medium' }}
+    justify="center"
     {...props}
   />
-);
+)
 
-class App extends Component {
-  state = {
-    current: 0,
-    images: [],
-    mode: 'view',
-    slides: initialSlides,
-    text: initialText,
-  }
+const App = () => {
+  const [current, setCurrent] = React.useState(0)
+  const [images, setImages] = React.useState([])
+  const [mode, setMode] = React.useState('view')
+  const [slides, setSlides] = React.useState(initialSlides)
+  const [text, setText] = React.useState(initialText)
 
-  componentDidMount () {
-    const { addEventListener, location } = document;
-    addEventListener('touchstart', this.onTouchStart);
-    addEventListener('touchmove', this.onTouchMove);
-    addEventListener('touchend', this.onTouchEnd);
-    addEventListener('touchcancel', this.onTouchCancel);
-
-    // load text from URL, or local storage, if any
-    const params = {};
-    location.search.slice(1).split('&').forEach(p => {
-      const [k, v] = p.split('=');
-      params[k] = v;
-    });
-    const encodedText = params.t || window.localStorage.getItem('text');
+  // load initial text from URL, or local storage, if any
+  React.useEffect(() => {
+    const params = {}
+    document.location.search.slice(1).split('&').forEach(p => {
+      const [k, v] = p.split('=')
+      params[k] = v
+    })
+    const encodedText = params.t || window.localStorage.getItem('text')
     if (encodedText) {
-      const text = LZString.decompressFromEncodedURIComponent(encodedText);
-      const slides = textToSlides(text);
-      this.setState({ text, slides }, this.loadImages);
+      const nextText = LZString.decompressFromEncodedURIComponent(encodedText)
+      setText(nextText)
+      setSlides(textToSlides(nextText))
     }
-    const mode = window.localStorage.getItem('mode') || this.state.mode;
-    this.setState({ mode });
-  }
+    const nextMode = window.localStorage.getItem('mode')
+    if (nextMode) setMode(nextMode)
+  }, [])
 
-  componentWillUnmount () {
-    const { removeEventListener } = document;
-    clearTimeout(this.loadTimer);
-    removeEventListener('touchstart', this.onTouchStart);
-    removeEventListener('touchmove', this.onTouchMove);
-    removeEventListener('touchend', this.onTouchEnd);
-    removeEventListener('touchcancel', this.onTouchCancel);
-  }
-
-  loadImages = () => {
-    const { images, slides } = this.state;
-    const nextImages = images.slice(0);
+  // set images when slides change
+  React.useEffect(() => {
+    const nextImages = []
     slides.forEach((s, i) => {
-      const match = s.match(/^# (\w+)\s*$/);
+      const match = s.match(/^# (\w+)\s*$/)
       if (match) {
-        const name = match[1];
-        nextImages[i] = this.loadImage(name, i);
-      } else {
-        delete nextImages[i];
+        const name = match[1]
+        nextImages[i] = window.localStorage.getItem(`image-${name}`) || name
       }
-    });
-    this.setState({ images: nextImages });
-  }
+    })
+    setImages(nextImages)
+  }, [slides])
 
-  loadImage = (name, index) => {
-    const url = window.localStorage.getItem(`image-${name}`);
-    if (!url) {
-      fetch(
-        `https://api.unsplash.com/search/photos?query=${name}&per_page=1`,
-        {
-          headers: {
-            "method": "GET",
-            "Accept-Version": "v1",
-            "Authorization": `Client-ID ${UNSPLASH_API_KEY}`,
-          },
-        })
+  const loadTimer = React.useRef()
+
+  // lazily load
+  React.useEffect(() => {
+    clearTimeout(loadTimer.current)
+    loadTimer.current = setTimeout(() => {
+      images.forEach((image, index) => {
+        if (image && !image.startsWith('url(')) {
+          console.log('!!! fetch', image)
+          fetch(
+            `https://api.unsplash.com/search/photos?query=${image}&per_page=1`,
+            {
+              headers: {
+                "method": "GET",
+                "Accept-Version": "v1",
+                "Authorization": `Client-ID ${UNSPLASH_API_KEY}`,
+              },
+            },
+          )
           .then(response => response.json())
           .then(response => {
             if (response.results.length > 0) {
-              const url = `url(${response.results[0].urls.regular})`;
-              window.localStorage.setItem(`image-${name}`, url);
-              const images = this.state.images.slice(0);
-              images[index] = url;
-              this.setState({ images });
+              const url = `url(${response.results[0].urls.regular})`
+              window.localStorage.setItem(`image-${image}`, url)
+              const nextImages = images.slice(0)
+              nextImages[index] = url
+              setImages(nextImages)
             }
-          });
-    }
-    return url;
-  }
-
-  onTouchStart = (event) => {
-    event.preventDefault();
-    this.touchStart = createTouch(event);
-  }
-
-  onTouchMove = (event) => {
-    event.preventDefault();
-  }
-
-  onTouchEnd = (event) => {
-    if (this.touchStart) {
-      const touchEnd = createTouch(event);
-      if (touchEnd) {
-        const delta = {
-          at: (touchEnd.at - this.touchStart.at),
-          x: (touchEnd.x - this.touchStart.x),
-          y: (touchEnd.y - this.touchStart.y),
+          })
         }
+      })
+    }, 5000) // 5s empircally determined
+    return () => clearTimeout(loadTimer.current)
+  }, [images])
 
-        if (Math.abs(delta.y) < 100 && delta.at < 200) {
-          if (delta.x > 100) {
-            this.onPrevious();
-          } else if (delta.x < -100) {
-            this.onNext();
+  const onNext = React.useCallback(() =>
+    setCurrent(Math.min(current + 1, slides.length - 1)),
+    [current, slides],
+  )
+
+  const onPrevious = React.useCallback(() =>
+    setCurrent(Math.max(current - 1, 0)),
+    [current],
+  )
+
+  React.useEffect(() => {
+    const { addEventListener, removeEventListener } = document
+    let touchStart
+
+    const onTouchStart = (event) => {
+      event.preventDefault()
+      touchStart = createTouch(event)
+    }
+  
+    const onTouchMove = (event) => {
+      event.preventDefault()
+    }
+  
+    const onTouchEnd = (event) => {
+      if (touchStart) {
+        const touchEnd = createTouch(event)
+        if (touchEnd) {
+          const delta = {
+            at: (touchEnd.at - touchStart.at),
+            x: (touchEnd.x - touchStart.x),
+            y: (touchEnd.y - touchStart.y),
+          }
+  
+          if (Math.abs(delta.y) < 100 && delta.at < 200) {
+            if (delta.x > 100) {
+              onPrevious()
+            } else if (delta.x < -100) {
+              onNext()
+            }
           }
         }
+        touchStart = undefined
       }
-      this.touchStart = undefined;
+    }
+  
+    const onTouchCancel = (event) => {
+      touchStart = undefined
+    }
+
+    addEventListener('touchstart', onTouchStart)
+    addEventListener('touchmove', onTouchMove)
+    addEventListener('touchend', onTouchEnd)
+    addEventListener('touchcancel', onTouchCancel)
+
+    return () => {
+      removeEventListener('touchstart', onTouchStart)
+      removeEventListener('touchmove', onTouchMove)
+      removeEventListener('touchend', onTouchEnd)
+      removeEventListener('touchcancel', onTouchCancel)
+    }
+  }, [onNext, onPrevious])
+
+  const onChange = event => {
+    const nextText = event.target.value
+    setText(nextText)
+    const nextSlides = textToSlides(nextText)
+    setSlides(nextSlides)
+    nextSlides.some((s, i) => {
+      const slide = slides[i]
+      if (!slide || slide.length !== s.length) {
+        setCurrent(i)
+        return true
+      }
+      return false
+    })
+    window.localStorage.setItem('text',
+      LZString.compressToEncodedURIComponent(nextText))
+    // clear any text in the browser location when editing
+    if (window.location.search) {
+      window.history.pushState(null, '', '/')
     }
   }
 
-  onTouchCancel = (event) => {
-    this.touchStart = undefined;
+  const onChangeMode = (mode) => {
+    setMode(mode)
+    window.localStorage.setItem('mode', mode)
   }
 
-  onChange = event => {
-    const { slides: priorSlides } = this.state;
-    const text = event.target.value;
-    const slides = textToSlides(text);
-    let { current } = this.state;
-    slides.some((s, i) => {
-      const prior = priorSlides[i];
-      if (!prior || prior.length !== s.length) {
-        current = i;
-        return true;
-      }
-      return false;
-    });
-    this.setState({ current, slides, text, editing: true }, () => {
-      window.localStorage.setItem(
-        'text', LZString.compressToEncodedURIComponent(text));
-      // clear any text in the browser location when editing
-      if (window.location.search) {
-        window.history.pushState(null, '', '/');
-      }
-    });
-    // delay loading images to avoid too many requests and ride out user typing
-    clearTimeout(this.loadTimer);
-    this.loadTimer = setTimeout(() => {
-      this.loadImages();
-      this.loadTimer = null;
-      this.setState({ editing: false });
-    }, 5000); // 5s empircally determined
-  }
-
-  onNext = () => {
-    const { current, slides } = this.state;
-    this.setState({ current: Math.min(current + 1, slides.length - 1)});
-  }
-
-  onPrevious = () => {
-    const { current } = this.state;
-    this.setState({ current: Math.max(current - 1, 0)});
-  }
-
-  onChangeMode = (mode) => {
-    this.setState({ mode }, () => {
-      window.localStorage.setItem('mode', mode)
-    });
-  }
-
-  renderControls = (mode, responsiveSize, text) => {
-    const EditControlIcon = editControl[mode].Icon;
+  const renderControls = (responsiveSize) => {
+    const EditControlIcon = editControl[mode].Icon
     return (
       <Box
         flex={false}
@@ -225,7 +223,7 @@ class App extends Component {
         <Button
           icon={<EditControlIcon />}
           hoverIndicator
-          onClick={() => this.onChangeMode(editControl[mode].mode)}
+          onClick={() => onChangeMode(editControl[mode].mode)}
         />
 
         <Box
@@ -240,12 +238,12 @@ class App extends Component {
               <Button
                 icon={<Previous />}
                 hoverIndicator
-                onClick={this.onPrevious}
+                onClick={onPrevious}
               />
               <Button
                 icon={<Next />}
                 hoverIndicator
-                onClick={this.onNext}
+                onClick={onNext}
               />
             </Fragment>
           )}
@@ -259,95 +257,81 @@ class App extends Component {
           href={`?t=${LZString.compressToEncodedURIComponent(text)}`}
         />
       </Box>
-    );
+    )
   }
 
-  render() {
-    const { current, editing, images, mode, slides, text } = this.state;
-    const slide = slides[current].trim();
-    const size = (slide.length < 10) ? 'xlarge' : 'large';
-    const textAlign = (slide.indexOf("\n") === -1) ? 'center' : 'start';
-    const components = {
-      h1: { props: { textAlign, size } },
-      h2: { props: { textAlign, size } },
-      h3: { props: { textAlign, size } },
-      p: { props: { textAlign, size } },
-      ul: { component: Box, props: { as: 'ul', margin: { left: 'medium' } } },
-      ol: { component: Box, props: { as: 'ol', margin: { left: 'medium' } } },
-      li: { component: Paragraph, props: { as: 'li', size } },
-    };
+  const slide = slides[current].trim()
+  const size = (slide.length < 10) ? 'xlarge' : 'large'
+  const textAlign = (slide.indexOf("\n") === -1) ? 'center' : 'start'
+  const components = {
+    h1: { props: { textAlign, size } },
+    h2: { props: { textAlign, size } },
+    h3: { props: { textAlign, size } },
+    p: { props: { textAlign, size } },
+    ul: { component: Box, props: { as: 'ul', margin: { left: 'medium' } } },
+    ol: { component: Box, props: { as: 'ol', margin: { left: 'medium' } } },
+    li: { component: Paragraph, props: { as: 'li', size } },
+  }
 
-    // if second line of slide is an image, make it the background,
-    // and remove from markdown content
-    const lines = slide.split("\n");
-    const secondLine = lines[1] || '';
-    const match = secondLine.match(/^!\[.*\]\((.+)\)$/);
-    let content = slide;
-    let background = images[current] || `accent-${(current % 3) + 1}`;
-    if (match) {
-      background = `url(${match[1]})`;
-      lines.splice(1, 1);
-      content = lines.join("\n");
-    }
-    content = <Markdown components={components}>{content}</Markdown>;
+  // if second line of slide is an image, make it the background,
+  // and remove from markdown content
+  const lines = slide.split("\n")
+  const secondLine = lines[1] || ''
+  const match = secondLine.match(/^!\[.*\]\((.+)\)$/)
+  let content = slide
+  let background = images[current] || `accent-${(current % 3) + 1}`
+  if (match) {
+    background = `url(${match[1]})`
+    lines.splice(1, 1)
+    content = lines.join("\n")
+  }
+  content = <Markdown components={components}>{content}</Markdown>
 
-    const backgroundImage = (background.slice(0, 4) === 'url(');
-    if (backgroundImage) {
-      content = <LightBox>{content}</LightBox>
-    }
+  const backgroundImage = (background.slice(0, 4) === 'url(')
+  if (backgroundImage) {
+    content = <LightBox>{content}</LightBox>
+  }
 
-    return (
-      <Grommet full theme={grommet}>
-        <ResponsiveContext.Consumer>
-          {(responsiveSize) => (
-            <Box fill>
-              {responsiveSize !== 'small' &&
-                this.renderControls(mode, responsiveSize, text)}
-              <Box flex={true} direction="row">
-                {mode !== 'view' && (
-                  <Box basis="medium">
-                    <Box flex={true}>
-                      <TextArea fill value={text} onChange={this.onChange} />
-                    </Box>
-                    {editing && (
-                      <Box pad="xsmall" animation={{ type: 'pulse', size: 'small' }}>
-                        <Text
-                          size="small"
-                          color="dark-5"
-                          textAlign="center"
-                        >
-                          waiting for typing to pause
-                        </Text>
-                      </Box>
-                    )}
+  return (
+    <Grommet full theme={grommet}>
+      <ResponsiveContext.Consumer>
+        {(responsiveSize) => (
+          <Box fill>
+            {responsiveSize !== 'small' &&
+              renderControls(mode, responsiveSize, text)}
+            <Box flex={true} direction="row">
+              {mode !== 'view' && (
+                <Box basis="medium">
+                  <Box flex={true}>
+                    <TextArea fill value={text} onChange={onChange} />
                   </Box>
-                )}
-                <Box {...viewContainerProps[mode]} overflow="hidden">
-                  <Keyboard
-                    onLeft={this.onPrevious}
-                    onRight={this.onNext}
-                  >
-                    <Box
-                      tabIndex="-1"
-                      fill
-                      pad="xlarge"
-                      background={background}
-                      justify={backgroundImage ? 'center' : undefined}
-                      align={backgroundImage ? 'center' : undefined}
-                    >
-                      {content}
-                    </Box>
-                  </Keyboard>
                 </Box>
+              )}
+              <Box {...viewContainerProps[mode]} overflow="hidden">
+                <Keyboard
+                  onLeft={onPrevious}
+                  onRight={onNext}
+                >
+                  <Box
+                    tabIndex="-1"
+                    fill
+                    pad="xlarge"
+                    background={background}
+                    justify={backgroundImage ? 'center' : undefined}
+                    align={backgroundImage ? 'center' : undefined}
+                  >
+                    {content}
+                  </Box>
+                </Keyboard>
               </Box>
-              {responsiveSize === 'small' &&
-                this.renderControls(mode, responsiveSize, text)}
             </Box>
-          )}
-        </ResponsiveContext.Consumer>
-      </Grommet>
-    );
-  }
+            {responsiveSize === 'small' &&
+              renderControls(mode, responsiveSize, text)}
+          </Box>
+        )}
+      </ResponsiveContext.Consumer>
+    </Grommet>
+  )
 }
 
-export default App;
+export default App
