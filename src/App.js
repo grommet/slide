@@ -308,12 +308,10 @@ const App = () => {
           <Box fill>
             {responsiveSize !== 'small' &&
               renderControls(mode, responsiveSize, text)}
-            <Box flex={true} direction="row">
+            <Box flex direction="row">
               {mode !== 'view' && (
                 <Box basis="medium">
-                  <Box flex={true}>
-                    <TextArea fill value={text} onChange={onChange} />
-                  </Box>
+                  <TextArea fill value={text} onChange={onChange} />
                 </Box>
               )}
               <Box
