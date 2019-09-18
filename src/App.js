@@ -43,9 +43,10 @@ const createTouch = (event) => {
 
 const LightBox = props => (
   <Box
-    pad={{ horizontal: "large" }}
+    pad={{ horizontal: "xlarge" }}
     background={{ color: 'dark-3', opacity: 'medium' }}
     justify="center"
+    round="small"
     {...props}
   />
 )
@@ -56,15 +57,19 @@ const App = () => {
   const [mode, setMode] = React.useState('view')
   const [slides, setSlides] = React.useState(initialSlides)
   const [text, setText] = React.useState(initialText)
+  const [fullScreen, setFullScreen] = React.useState()
+  const viewerRef = React.useRef()
 
-  // load initial text from URL, or local storage, if any
+  // load initial slides from URL, or local storage, if any
   React.useEffect(() => {
     const params = {}
     document.location.search.slice(1).split('&').forEach(p => {
       const [k, v] = p.split('=')
       params[k] = v
     })
-    const encodedText = params.t || window.localStorage.getItem('text')
+    const encodedText = params.t
+      || window.localStorage.getItem('slides')
+      || window.localStorage.getItem('text')
     if (encodedText) {
       const nextText = LZString.decompressFromEncodedURIComponent(encodedText)
       setText(nextText)
@@ -120,6 +125,8 @@ const App = () => {
     }, 5000) // 5s empircally determined
     return () => clearTimeout(loadTimer.current)
   }, [images])
+
+  React.useEffect(() => window.localStorage.setItem('mode', mode), [mode])
 
   const onNext = React.useCallback(() =>
     setCurrent(Math.min(current + 1, slides.length - 1)),
@@ -196,17 +203,12 @@ const App = () => {
       }
       return false
     })
-    window.localStorage.setItem('text',
+    window.localStorage.setItem('slides',
       LZString.compressToEncodedURIComponent(nextText))
     // clear any text in the browser location when editing
     if (window.location.search) {
       window.history.pushState(null, '', '/')
     }
-  }
-
-  const onChangeMode = (mode) => {
-    setMode(mode)
-    window.localStorage.setItem('mode', mode)
   }
 
   const renderControls = (responsiveSize) => {
@@ -222,7 +224,7 @@ const App = () => {
         <Button
           icon={<EditControlIcon />}
           hoverIndicator
-          onClick={() => onChangeMode(editControl[mode].mode)}
+          onClick={() => setMode(editControl[mode].mode)}
         />
 
         <Box
@@ -314,10 +316,30 @@ const App = () => {
                   </Box>
                 </Box>
               )}
-              <Box {...viewContainerProps[mode]} overflow="hidden">
+              <Box
+                ref={viewerRef}
+                fill={fullScreen}
+                {...viewContainerProps[mode]}
+                overflow="hidden"
+              >
                 <Keyboard
                   onLeft={onPrevious}
                   onRight={onNext}
+                  onShift={() => {
+                    if (!fullScreen) {
+                      viewerRef.current.webkitRequestFullscreen()
+                    } else {
+                      document.webkitExitFullscreen()
+                    }
+                    setFullScreen(!fullScreen)
+                  }}
+                  onEsc={() => setFullScreen(false)}
+                  onKeyDown={({ keyCode }) => {
+                    const nextCurrent = keyCode - 49
+                    if (nextCurrent >= 0 && nextCurrent <= (slides.length - 1)) {
+                      setCurrent(nextCurrent)
+                    }
+                  }}
                 >
                   <Box
                     tabIndex="-1"
