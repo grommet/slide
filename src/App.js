@@ -95,7 +95,6 @@ const App = () => {
     loadTimer.current = setTimeout(() => {
       images.forEach((image, index) => {
         if (image && !image.startsWith('url(')) {
-          console.log('!!! fetch', image)
           fetch(
             `https://api.unsplash.com/search/photos?query=${image}&per_page=1`,
             {
