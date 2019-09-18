@@ -248,13 +248,21 @@ const App = () => {
           )}
         </Box>
 
-        <Button
-          icon={<Share />}
-          hoverIndicator
-          target="_blank"
-          rel="noopener noreferrer"
-          href={`?t=${LZString.compressToEncodedURIComponent(text)}`}
-        />
+        {navigator.share && (
+          <Button
+            icon={<Share />}
+            hoverIndicator
+            onClick={() => {
+              const match = text.match(/^# (.+)\s*$/)
+              const title = match ? match[1] : 'Slides'
+              navigator.share({
+                title,
+                text: title,
+                url: `?t=${LZString.compressToEncodedURIComponent(text)}`,
+              })
+            }}
+          />
+        )}
       </Box>
     )
   }
