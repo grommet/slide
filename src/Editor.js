@@ -35,6 +35,11 @@ const Editor = ({ set, onChange }) => {
             }
           }}
         />
+        <Button
+          icon={<ShareIcon />}
+          hoverIndicator
+          onClick={() => setShare(!share)}
+        />
       </Box>
       <TextArea
         fill
@@ -46,7 +51,9 @@ const Editor = ({ set, onChange }) => {
         }}
       />
       {manage && <Manage setSet={onChange} onClose={() => setManage(false)} />}
-      {share && <Share set={set} onClose={() => setShare(false)} />}
+      {share && (
+        <Share set={set} onChange={onChange} onClose={() => setShare(false)} />
+      )}
     </Box>
   )
 }

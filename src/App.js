@@ -7,6 +7,7 @@ import { Edit, Expand, Next, Previous } from 'grommet-icons'
 import LZString from 'lz-string'
 import React from 'react'
 import Editor from './Editor'
+import { apiUrl } from './slide'
 
 const textToSlides = text => text.split(/\s# /).map((s, i) => i ? `# ${s}` : s)
 
@@ -59,25 +60,50 @@ const App = () => {
       const [k, v] = p.split('=')
       params[k] = v
     })
-    const encodedText = params.t
-      || window.localStorage.getItem('slides')
-      || window.localStorage.getItem('text')
-    if (encodedText) {
-      const text = LZString.decompressFromEncodedURIComponent(encodedText)
-      setSet({ text })
-      setSlides(textToSlides(text))
-    }
-    const storedSets = window.localStorage.getItem('slide-sets')
-    if (storedSets) {
-      const sets = JSON.parse(storedSets)
-      if (sets[0]) {
-        const storedSet = window.localStorage.getItem(sets[0])
-        setSet(JSON.parse(storedSet))
+    if (params.id) {
+      fetch(`${apiUrl}/${params.id}`)
+      .then(response => response.json())
+      .then((set) => {
+        document.title = set.name
+        setSet(set)
+      })
+    } else {
+      const encodedText = params.t
+        || window.localStorage.getItem('slides')
+        || window.localStorage.getItem('text')
+      if (encodedText) {
+        const text = LZString.decompressFromEncodedURIComponent(encodedText)
+        setSet({ text })
+        setSlides(textToSlides(text))
+      } else {
+        const storedSets = window.localStorage.getItem('slide-sets')
+        if (storedSets) {
+          const sets = JSON.parse(storedSets)
+          if (sets[0]) {
+            const storedSet = window.localStorage.getItem(sets[0])
+            setSet(JSON.parse(storedSet))
+          }
+        }
       }
     }
     const nextEdit = window.localStorage.getItem('slide-edit')
     if (nextEdit) setEdit(JSON.parse(nextEdit))
   }, [])
+
+  // break apart slides when set changes
+  React.useEffect(() => setSlides(textToSlides(set.text)), [set])
+
+  // set current when slides change
+  React.useEffect(() => {
+    slides.some((s, i) => {
+      const slide = slides[i]
+      if (!slide || slide.length !== s.length) {
+        setCurrent(i)
+        return true
+      }
+      return false
+    })
+  }, [slides])
 
   // set images when slides change
   React.useEffect(() => {
@@ -193,16 +219,6 @@ const App = () => {
 
   const onChange = nextSet => {
     setSet(nextSet)
-    const nextSlides = textToSlides(nextSet.text)
-    setSlides(nextSlides)
-    nextSlides.some((s, i) => {
-      const slide = slides[i]
-      if (!slide || slide.length !== s.length) {
-        setCurrent(i)
-        return true
-      }
-      return false
-    })
     clearTimeout(storageTimer.current)
     storageTimer.current = setTimeout(() => {
       window.localStorage.setItem(nextSet.name, JSON.stringify(nextSet))
