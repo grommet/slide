@@ -1,11 +1,12 @@
 import {
   Box, Button, Grommet, Keyboard, Markdown, Paragraph,
-  ResponsiveContext, TextArea,
+  ResponsiveContext,
 } from 'grommet'
 import { grommet } from 'grommet/themes'
-import { Close, Edit, Next, Previous, Share } from 'grommet-icons'
+import { Edit, Expand, Next, Previous } from 'grommet-icons'
 import LZString from 'lz-string'
-import React, { Fragment } from 'react'
+import React from 'react'
+import Editor from './Editor'
 
 const textToSlides = text => text.split(/\s# /).map((s, i) => i ? `# ${s}` : s)
 
@@ -15,16 +16,6 @@ const initialSlides = textToSlides(initialText)
 const UNSPLASH_API_KEY = process.env.REACT_APP_UNSPLASH_API_KEY
 if (!UNSPLASH_API_KEY) {
   console.error("Missing UNSPLASH_API_KEY")
-}
-
-const editControl = {
-  edit: { Icon: Close, mode: 'view' },
-  view: { Icon: Edit, mode: 'edit' },
-}
-
-const viewContainerProps = {
-  edit: { flex: true },
-  view: { flex: true },
 }
 
 const createTouch = (event) => {
@@ -52,15 +43,16 @@ const LightBox = props => (
 )
 
 const App = () => {
+  const [set, setSet] = React.useState({ text: initialText })
   const [current, setCurrent] = React.useState(0)
   const [images, setImages] = React.useState([])
-  const [mode, setMode] = React.useState('view')
+  const [edit, setEdit] = React.useState(false)
   const [slides, setSlides] = React.useState(initialSlides)
-  const [text, setText] = React.useState(initialText)
   const [fullScreen, setFullScreen] = React.useState()
+  const storageTimer = React.useRef()
   const viewerRef = React.useRef()
 
-  // load initial slides from URL, or local storage, if any
+  // load initial set from URL, or local storage, if any
   React.useEffect(() => {
     const params = {}
     document.location.search.slice(1).split('&').forEach(p => {
@@ -71,12 +63,20 @@ const App = () => {
       || window.localStorage.getItem('slides')
       || window.localStorage.getItem('text')
     if (encodedText) {
-      const nextText = LZString.decompressFromEncodedURIComponent(encodedText)
-      setText(nextText)
-      setSlides(textToSlides(nextText))
+      const text = LZString.decompressFromEncodedURIComponent(encodedText)
+      setSet({ text })
+      setSlides(textToSlides(text))
     }
-    const nextMode = window.localStorage.getItem('mode')
-    if (nextMode) setMode(nextMode)
+    const storedSets = window.localStorage.getItem('slide-sets')
+    if (storedSets) {
+      const sets = JSON.parse(storedSets)
+      if (sets[0]) {
+        const storedSet = window.localStorage.getItem(sets[0])
+        setSet(JSON.parse(storedSet))
+      }
+    }
+    const nextEdit = window.localStorage.getItem('slide-edit')
+    if (nextEdit) setEdit(JSON.parse(nextEdit))
   }, [])
 
   // set images when slides change
@@ -86,7 +86,7 @@ const App = () => {
       const match = s.match(/^# (\w+)\s*$/)
       if (match) {
         const name = match[1]
-        nextImages[i] = window.localStorage.getItem(`image-${name}`) || name
+        nextImages[i] = window.localStorage.getItem(`slide-image-${name}`) || name
       }
     })
     setImages(nextImages)
@@ -114,7 +114,7 @@ const App = () => {
           .then(response => {
             if (response.results.length > 0) {
               const url = `url(${response.results[0].urls.regular})`
-              window.localStorage.setItem(`image-${image}`, url)
+              window.localStorage.setItem(`slide-image-${image}`, url)
               const nextImages = images.slice(0)
               nextImages[index] = url
               setImages(nextImages)
@@ -126,7 +126,8 @@ const App = () => {
     return () => clearTimeout(loadTimer.current)
   }, [images])
 
-  React.useEffect(() => window.localStorage.setItem('mode', mode), [mode])
+  React.useEffect(() =>
+    window.localStorage.setItem('slide-edit', JSON.stringify(edit)), [edit])
 
   const onNext = React.useCallback(() =>
     setCurrent(Math.min(current + 1, slides.length - 1)),
@@ -190,10 +191,9 @@ const App = () => {
     }
   }, [onNext, onPrevious])
 
-  const onChange = event => {
-    const nextText = event.target.value
-    setText(nextText)
-    const nextSlides = textToSlides(nextText)
+  const onChange = nextSet => {
+    setSet(nextSet)
+    const nextSlides = textToSlides(nextSet.text)
     setSlides(nextSlides)
     nextSlides.some((s, i) => {
       const slide = slides[i]
@@ -203,71 +203,65 @@ const App = () => {
       }
       return false
     })
-    window.localStorage.setItem('slides',
-      LZString.compressToEncodedURIComponent(nextText))
-    // clear any text in the browser location when editing
-    if (window.location.search) {
-      window.history.pushState(null, '', '/')
-    }
+    clearTimeout(storageTimer.current)
+    storageTimer.current = setTimeout(() => {
+      window.localStorage.setItem(nextSet.name, JSON.stringify(nextSet))
+      // clear any text in the browser location when editing
+      if (window.location.search) {
+        window.history.pushState(null, '', '/')
+      }
+    }, 1000)
   }
 
-  const renderControls = (responsiveSize) => {
-    const EditControlIcon = editControl[mode].Icon
-    return (
+  const toggleFullscreen = () => {
+    if (!fullScreen) {
+      viewerRef.current.webkitRequestFullscreen()
+    } else {
+      document.webkitExitFullscreen()
+    }
+    setFullScreen(!fullScreen)
+  }
+
+  const Controls = ({ justify }) => (
+    <Box
+      flex={false}
+      direction="row"
+      align="center"
+      justify={justify || 'between'}
+      background="dark-1"
+    >
+      <Button
+        icon={<Edit />}
+        hoverIndicator
+        onClick={() => setEdit(!edit)}
+      />
+
       <Box
         flex={false}
         direction="row"
+        justify="center"
         align="center"
-        justify={responsiveSize === 'small' ? 'around' : 'between'}
         background="dark-1"
       >
         <Button
-          icon={<EditControlIcon />}
+          icon={<Previous />}
           hoverIndicator
-          onClick={() => setMode(editControl[mode].mode)}
+          onClick={onPrevious}
         />
-
-        <Box
-          flex={false}
-          direction="row"
-          justify="center"
-          align="center"
-          background="dark-1"
-        >
-          {(mode !== 'edit' || responsiveSize !== 'small') && (
-            <Fragment>
-              <Button
-                icon={<Previous />}
-                hoverIndicator
-                onClick={onPrevious}
-              />
-              <Button
-                icon={<Next />}
-                hoverIndicator
-                onClick={onNext}
-              />
-            </Fragment>
-          )}
-        </Box>
-
-        {navigator.share && (
-          <Button
-            icon={<Share />}
-            hoverIndicator
-            onClick={() => {
-              const match = text.match(/^# (.+)\s*$/)
-              const title = match ? match[1] : 'Slides'
-              navigator.share({
-                title,
-                text: title,
-                url: `?t=${LZString.compressToEncodedURIComponent(text)}`,
-              })
-            }}
-          />
-        )}
+        <Button
+          icon={<Next />}
+          hoverIndicator
+          onClick={onNext}
+        />
       </Box>
-    )
-  }
+
+      <Button
+        icon={<Expand />}
+        hoverIndicator
+        onClick={toggleFullscreen}
+      />
+    </Box>
+  )
 
   const slide = slides[current].trim()
   const size = (slide.length < 10) ? 'xlarge' : 'large'
@@ -306,31 +300,20 @@ const App = () => {
       <ResponsiveContext.Consumer>
         {(responsiveSize) => (
           <Box fill>
-            {responsiveSize !== 'small' &&
-              renderControls(mode, responsiveSize, text)}
             <Box flex direction="row">
-              {mode !== 'view' && (
-                <Box basis="medium">
-                  <TextArea fill value={text} onChange={onChange} />
-                </Box>
-              )}
+              {edit && <Editor set={set} onChange={onChange} />}
               <Box
                 ref={viewerRef}
                 fill={fullScreen}
-                {...viewContainerProps[mode]}
+                flex
                 overflow="hidden"
+                direction={responsiveSize === 'small' ? 'column-reverse' : 'column'}
               >
+                <Controls justify="between" />
                 <Keyboard
                   onLeft={onPrevious}
                   onRight={onNext}
-                  onShift={() => {
-                    if (!fullScreen) {
-                      viewerRef.current.webkitRequestFullscreen()
-                    } else {
-                      document.webkitExitFullscreen()
-                    }
-                    setFullScreen(!fullScreen)
-                  }}
+                  onShift={toggleFullscreen}
                   onEsc={() => setFullScreen(false)}
                   onKeyDown={({ keyCode }) => {
                     const nextCurrent = keyCode - 49
@@ -352,8 +335,6 @@ const App = () => {
                 </Keyboard>
               </Box>
             </Box>
-            {responsiveSize === 'small' &&
-              renderControls(mode, responsiveSize, text)}
           </Box>
         )}
       </ResponsiveContext.Consumer>
