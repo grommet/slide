@@ -68,21 +68,21 @@ const App = () => {
         setSet(set)
       })
     } else {
-      const encodedText = params.t
-        || window.localStorage.getItem('slides')
-        || window.localStorage.getItem('text')
-      if (encodedText) {
-        const text = LZString.decompressFromEncodedURIComponent(encodedText)
-        setSet({ text })
-        setSlides(textToSlides(text))
+      const storedSets = window.localStorage.getItem('slide-sets')
+      if (storedSets) {
+        const sets = JSON.parse(storedSets)
+        if (sets[0]) {
+          const storedSet = window.localStorage.getItem(sets[0])
+          setSet(JSON.parse(storedSet))
+        }
       } else {
-        const storedSets = window.localStorage.getItem('slide-sets')
-        if (storedSets) {
-          const sets = JSON.parse(storedSets)
-          if (sets[0]) {
-            const storedSet = window.localStorage.getItem(sets[0])
-            setSet(JSON.parse(storedSet))
-          }
+        const encodedText = params.t
+          || window.localStorage.getItem('slides')
+          || window.localStorage.getItem('text')
+        if (encodedText) {
+          const text = LZString.decompressFromEncodedURIComponent(encodedText)
+          setSet({ text })
+          setSlides(textToSlides(text))
         }
       }
     }
@@ -318,28 +318,28 @@ const App = () => {
           <Box fill>
             <Box flex direction="row">
               {edit && <Editor set={set} onChange={onChange} />}
-              <Box
-                ref={viewerRef}
-                fill={fullScreen}
-                flex
-                overflow="hidden"
-                direction={responsiveSize === 'small' ? 'column-reverse' : 'column'}
+              <Keyboard
+                onLeft={onPrevious}
+                onRight={onNext}
+                onShift={toggleFullscreen}
+                onEsc={() => setFullScreen(false)}
+                onKeyDown={({ keyCode }) => {
+                  const nextCurrent = keyCode - 49
+                  if (nextCurrent >= 0 && nextCurrent <= (slides.length - 1)) {
+                    setCurrent(nextCurrent)
+                  }
+                }}
               >
-                <Controls justify="between" />
-                <Keyboard
-                  onLeft={onPrevious}
-                  onRight={onNext}
-                  onShift={toggleFullscreen}
-                  onEsc={() => setFullScreen(false)}
-                  onKeyDown={({ keyCode }) => {
-                    const nextCurrent = keyCode - 49
-                    if (nextCurrent >= 0 && nextCurrent <= (slides.length - 1)) {
-                      setCurrent(nextCurrent)
-                    }
-                  }}
+                <Box
+                  ref={viewerRef}
+                  tabIndex="-1"
+                  fill={fullScreen}
+                  flex
+                  overflow="hidden"
+                  direction={responsiveSize === 'small' ? 'column-reverse' : 'column'}
                 >
+                  <Controls justify="between" />
                   <Box
-                    tabIndex="-1"
                     fill
                     pad="xlarge"
                     background={background}
@@ -348,8 +348,8 @@ const App = () => {
                   >
                     {content}
                   </Box>
-                </Keyboard>
-              </Box>
+                </Box>
+              </Keyboard>
             </Box>
           </Box>
         )}
