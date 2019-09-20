@@ -116,7 +116,7 @@ const Publish = ({ set, onChange }) => {
       </Form>
       {uploadUrl && (
         <Fragment>
-          <Box direction="row">
+          <Box direction="row" margin={{ top: 'medium' }}>
             <TextInput ref={inputRef} value={uploadUrl} />
             <Button
               icon={<Copy />}
@@ -152,13 +152,15 @@ const Share = ({ set, onChange, onClose }) => {
             share
           </Heading>
         </Box>
-        <Grid
-          fill="horizontal"
-          columns={{ count: 'fit', size: "small" }}
-          gap="large"
-        >
-          <Publish set={set} onChange={onChange} />
-        </Grid>
+        <Box flex pad={{ horizontal: 'large', bottom: 'large' }} overflow="auto">
+          <Grid
+            fill="horizontal"
+            columns={{ count: 'fit', size: "small" }}
+            gap="large"
+          >
+            <Publish set={set} onChange={onChange} />
+          </Grid>
+        </Box>
       </Box>
     </Layer>
   )
