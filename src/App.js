@@ -276,10 +276,13 @@ const App = () => {
                 onRight={onNext}
                 onShift={toggleFullscreen}
                 onEsc={() => setFullScreen(false)}
-                onKeyDown={({ keyCode }) => {
+                onKeyDown={({ key, keyCode, metaKey }) => {
                   const nextCurrent = keyCode - 49
                   if (nextCurrent >= 0 && nextCurrent <= (slides.length - 1)) {
                     setCurrent(nextCurrent)
+                  }
+                  if (key === 'e' && metaKey) {
+                    setEdit(!edit)
                   }
                 }}
               >
