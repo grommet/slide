@@ -1,18 +1,11 @@
-import {
-  Box, Button, Grommet, Keyboard, Markdown, Paragraph,
-  ResponsiveContext,
-} from 'grommet'
+import { Box, Button, Grommet, Keyboard, ResponsiveContext } from 'grommet'
 import { grommet } from 'grommet/themes'
-import { Edit, Expand, Next, Previous } from 'grommet-icons'
+import { Edit, Expand, Gremlin, Next, Previous } from 'grommet-icons'
 import LZString from 'lz-string'
 import React from 'react'
+import Content from './Content'
 import Editor from './Editor'
-import { apiUrl } from './slide'
-
-const textToSlides = text => text.split(/\s# /).map((s, i) => i ? `# ${s}` : s)
-
-const initialText = '# Hot\n\n- first\n- second\n\n# Frosty\n'
-const initialSlides = textToSlides(initialText)
+import { apiUrl, initialText, textToSlides } from './slide'
 
 const UNSPLASH_API_KEY = process.env.REACT_APP_UNSPLASH_API_KEY
 if (!UNSPLASH_API_KEY) {
@@ -33,22 +26,12 @@ const createTouch = (event) => {
   return undefined
 }
 
-const LightBox = props => (
-  <Box
-    pad={{ horizontal: "xlarge" }}
-    background={{ color: 'dark-3', opacity: 'medium' }}
-    justify="center"
-    round="small"
-    {...props}
-  />
-)
-
 const App = () => {
-  const [set, setSet] = React.useState({ text: initialText })
+  const [set, setSet] = React.useState()
   const [current, setCurrent] = React.useState(0)
   const [images, setImages] = React.useState([])
   const [edit, setEdit] = React.useState(false)
-  const [slides, setSlides] = React.useState(initialSlides)
+  const [slides, setSlides] = React.useState()
   const [fullScreen, setFullScreen] = React.useState()
   const storageTimer = React.useRef()
   const viewerRef = React.useRef()
@@ -83,6 +66,8 @@ const App = () => {
           const text = LZString.decompressFromEncodedURIComponent(encodedText)
           setSet({ text })
           setSlides(textToSlides(text))
+        } else {
+          setSet({ text: initialText })
         }
       }
     }
@@ -91,11 +76,11 @@ const App = () => {
   }, [])
 
   // break apart slides when set changes
-  React.useEffect(() => setSlides(textToSlides(set.text)), [set])
+  React.useEffect(() => set && setSlides(textToSlides(set.text)), [set])
 
   // set current when slides change
   React.useEffect(() => {
-    slides.some((s, i) => {
+    slides && slides.some((s, i) => {
       const slide = slides[i]
       if (!slide || slide.length !== s.length) {
         setCurrent(i)
@@ -108,7 +93,7 @@ const App = () => {
   // set images when slides change
   React.useEffect(() => {
     const nextImages = []
-    slides.forEach((s, i) => {
+    slides && slides.forEach((s, i) => {
       const match = s.match(/^# (\w+)\s*$/)
       if (match) {
         const name = match[1]
@@ -279,37 +264,7 @@ const App = () => {
     </Box>
   )
 
-  const slide = slides[current].trim()
-  const size = (slide.length < 10) ? 'xlarge' : 'large'
-  const textAlign = (slide.indexOf("\n") === -1) ? 'center' : 'start'
-  const components = {
-    h1: { props: { textAlign, size } },
-    h2: { props: { textAlign, size } },
-    h3: { props: { textAlign, size } },
-    p: { props: { textAlign, size } },
-    ul: { component: Box, props: { as: 'ul', margin: { left: 'medium' } } },
-    ol: { component: Box, props: { as: 'ol', margin: { left: 'medium' } } },
-    li: { component: Paragraph, props: { as: 'li', size } },
-  }
-
-  // if second line of slide is an image, make it the background,
-  // and remove from markdown content
-  const lines = slide.split("\n")
-  const secondLine = lines[1] || ''
-  const match = secondLine.match(/^!\[.*\]\((.+)\)$/)
-  let content = slide
-  let background = images[current] || `accent-${(current % 3) + 1}`
-  if (match) {
-    background = `url(${match[1]})`
-    lines.splice(1, 1)
-    content = lines.join("\n")
-  }
-  content = <Markdown components={components}>{content}</Markdown>
-
-  const backgroundImage = (background.slice(0, 4) === 'url(')
-  if (backgroundImage) {
-    content = <LightBox>{content}</LightBox>
-  }
+  console.log('!!!', set, slides, current);
 
   return (
     <Grommet full theme={grommet}>
@@ -339,15 +294,17 @@ const App = () => {
                   direction={responsiveSize === 'small' ? 'column-reverse' : 'column'}
                 >
                   <Controls justify="between" />
-                  <Box
-                    fill
-                    pad="xlarge"
-                    background={background}
-                    justify={backgroundImage ? 'center' : undefined}
-                    align={backgroundImage ? 'center' : undefined}
-                  >
-                    {content}
-                  </Box>
+                  {slides ? (
+                    <Content
+                      image={images[current]}
+                      index={current}
+                      slide={slides[current]}
+                    />
+                  ) : (
+                    <Box flex align="center" justify="center" animation="pulse">
+                      <Gremlin size="large" />
+                    </Box>
+                  )}
                 </Box>
               </Keyboard>
             </Box>
