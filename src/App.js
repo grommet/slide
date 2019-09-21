@@ -264,8 +264,6 @@ const App = () => {
     </Box>
   )
 
-  console.log('!!!', set, slides, current);
-
   return (
     <Grommet full theme={grommet}>
       <ResponsiveContext.Consumer>
