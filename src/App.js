@@ -78,16 +78,20 @@ const App = () => {
   // break apart slides when set changes
   React.useEffect(() => set && setSlides(textToSlides(set.text)), [set])
 
-  // set current when slides change
+  // set current to the slide being edited
+  const priorSlidesRef = React.useRef()
   React.useEffect(() => {
-    slides && slides.some((s, i) => {
-      const slide = slides[i]
-      if (!slide || slide.length !== s.length) {
-        setCurrent(i)
-        return true
-      }
-      return false
-    })
+    if (slides && priorSlidesRef.current) {
+      slides.some((s, i) => {
+        const priorSlide = priorSlidesRef.current[i]
+        if (!priorSlide || priorSlide.length !== s.length) {
+          setCurrent(i)
+          return true
+        }
+        return false
+      })
+    }
+    priorSlidesRef.current = slides
   }, [slides])
 
   // set images when slides change
@@ -207,6 +211,15 @@ const App = () => {
     clearTimeout(storageTimer.current)
     storageTimer.current = setTimeout(() => {
       window.localStorage.setItem(nextSet.name, JSON.stringify(nextSet))
+      // ensure this set is first
+      const stored = window.localStorage.getItem('slide-sets')
+      const sets = stored ? JSON.parse(stored) : []
+      const index = sets.indexOf(nextSet.name)
+      if (index !== 0) {
+        if (index > 0) sets.splice(index, 1)
+        sets.unshift(nextSet.name)
+        window.localStorage.setItem('slide-sets', JSON.stringify(sets))
+      }
       // clear any text in the browser location when editing
       if (window.location.search) {
         window.history.pushState(null, '', '/')
