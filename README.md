@@ -1,68 +1,47 @@
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+# grommet-slide
 
-## Available Scripts
+A tool to create and show slide presentations.
 
-In the project directory, you can run:
+Live at: [slide.grommet.io](https://slide.grommet.io)
 
-### `npm start`
+## Reference
 
-Runs the app in the development mode.<br>
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+### Syntax
 
-The page will reload if you make edits.<br>
-You will also see any lint errors in the console.
+Slides are built
+using [Markdown syntax](https://www.markdownguide.org/basic-syntax).
+Each heading level 1, `#`, starts
+a new slide. If the heading is a single word and there is no other content
+before the next slide, a background image will be automatcailly provided.
 
-### `npm test`
+### Command shortcuts
 
-Launches the test runner in the interactive watch mode.<br>
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+* **command-e** or **windows-E**: toggles view vs. edit modes
+* **ArrowLeft** and **ArrowRight**: previous and next slide
+* **1-9**: jump to slide at numbered position
+* **Shift**: toggles full screen
 
-### `npm run build`
+### Saving
 
-Builds the app for production to the `build` folder.<br>
-It correctly bundles React in production mode and optimizes the build for the best performance.
+Your latest edits are saved in your browser's local storage. So,
+you can refresh your window without fear of losing anything. But, if you
+clear your browser's local storage, you'll lose whatever you've done.
 
-The build is minified and the filenames include the hashes.<br>
-Your app is ready to be deployed!
+You can change the name of a slide set and it will be saved with that name.
+The control in the top left let's you browse your slide sets, create a new one.
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+### Sharing
 
-### `npm run eject`
+The Share control near the upper left allows you to publish your slide set.
+This will generate a unique URL you can send
+to someone. When they open that URL, they will see your slide set.
+They will not be
+able to modify the published version.
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+## Local development
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+1. `git clone`
 
-Instead, it will copy all the configuration files and the transitive dependencies (Webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+1. `yarn install`
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/code-splitting
-
-### Analyzing the Bundle Size
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size
-
-### Making a Progressive Web App
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app
-
-### Advanced Configuration
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/advanced-configuration
-
-### Deployment
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/deployment
-
-### `npm run build` fails to minify
-
-This section has moved here: https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify
+1. `yarn start`
