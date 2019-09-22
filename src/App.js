@@ -5,7 +5,7 @@ import LZString from 'lz-string'
 import React from 'react'
 import Content from './Content'
 import Editor from './Editor'
-import { apiUrl, initialText, textToSlides } from './slide'
+import { apiUrl, initialText, textToSlides, themeApiUrl } from './slide'
 
 const UNSPLASH_API_KEY = process.env.REACT_APP_UNSPLASH_API_KEY
 if (!UNSPLASH_API_KEY) {
@@ -30,6 +30,7 @@ const App = () => {
   const [set, setSet] = React.useState()
   const [current, setCurrent] = React.useState(0)
   const [images, setImages] = React.useState([])
+  const [theme, setTheme] = React.useState()
   const [edit, setEdit] = React.useState(false)
   const [slides, setSlides] = React.useState()
   const [fullScreen, setFullScreen] = React.useState()
@@ -77,6 +78,20 @@ const App = () => {
 
   // break apart slides when set changes
   React.useEffect(() => set && setSlides(textToSlides(set.text)), [set])
+
+  // load theme if needed
+  const priorThemeRef = React.useRef()
+  React.useEffect(() => {
+    if (set && set.theme !== priorThemeRef.current
+      && set.theme.slice(0, 6) === 'https:') {
+      // extract id from URL
+      const id = set.theme.split('id=')[1];
+      fetch(`${themeApiUrl}/${id}`)
+        .then(response => response.json())
+        .then(nextTheme => setTheme(nextTheme));
+    }
+    if (set) priorSlidesRef.current = set.theme
+  }, [set])
 
   // set current to the slide being edited
   const priorSlidesRef = React.useRef()
@@ -278,7 +293,7 @@ const App = () => {
   )
 
   return (
-    <Grommet full theme={grommet}>
+    <Grommet full theme={theme || grommet}>
       <ResponsiveContext.Consumer>
         {(responsiveSize) => (
           <Box fill>

@@ -50,6 +50,17 @@ const Editor = ({ set, onChange }) => {
           onChange(nextSet)
         }}
       />
+      <Box flex={false}>
+        <TextInput
+          placeholder="published theme"
+          value={set.theme || ''}
+          onChange={(event) => {
+            const nextSet = JSON.parse(JSON.stringify(set))
+            nextSet.theme = event.target.value
+            onChange(nextSet)
+          }}
+        />
+      </Box>
       {manage && <Manage setSet={onChange} onClose={() => setManage(false)} />}
       {share && (
         <Share set={set} onChange={onChange} onClose={() => setShare(false)} />
