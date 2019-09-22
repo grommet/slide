@@ -82,13 +82,16 @@ const App = () => {
   // load theme if needed
   const priorThemeRef = React.useRef()
   React.useEffect(() => {
-    if (set && set.theme !== priorThemeRef.current
-      && set.theme.slice(0, 6) === 'https:') {
-      // extract id from URL
-      const id = set.theme.split('id=')[1];
-      fetch(`${themeApiUrl}/${id}`)
-        .then(response => response.json())
-        .then(nextTheme => setTheme(nextTheme));
+    if (set && set.theme !== priorThemeRef.current) {
+      if (set.theme.slice(0, 6) === 'https:') {
+        // extract id from URL
+        const id = set.theme.split('id=')[1]
+        fetch(`${themeApiUrl}/${id}`)
+          .then(response => response.json())
+          .then(nextTheme => setTheme(nextTheme))
+      } else {
+        setTheme(undefined)
+      }
     }
     if (set) priorSlidesRef.current = set.theme
   }, [set])
