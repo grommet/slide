@@ -74,7 +74,16 @@ const App = () => {
     }
     const nextEdit = window.localStorage.getItem('slide-edit')
     if (nextEdit) setEdit(JSON.parse(nextEdit))
+
+    if (window.location.hash) {
+      setCurrent(parseInt(window.location.hash.slice(1), 10))
+    }
   }, [])
+
+  // set hash when changing current slide
+  React.useEffect(() => {
+    if (current >= 0) window.location.hash = `#${current}`;
+  }, [current])
 
   // break apart slides when set changes
   React.useEffect(() => set && setSlides(textToSlides(set.text)), [set])
