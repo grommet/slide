@@ -5,10 +5,16 @@ import { Apps, Share as ShareIcon } from 'grommet-icons'
 import React from 'react'
 import Manage from './Manage'
 import Share from './Share'
+import { characterToSlideIndex } from './slide'
 
-const Editor = ({ set, onChange }) => {
+const Editor = ({ set, onChange, setCurrent }) => {
   const [manage, setManage] = React.useState()
   const [share, setShare] = React.useState()
+
+  const checkCaret = (node) => {
+    console.log('!!! check', node)
+    setCurrent(characterToSlideIndex(set.text, node.selectionStart))
+  }
 
   return (
     <Box basis="medium">
@@ -49,6 +55,8 @@ const Editor = ({ set, onChange }) => {
           nextSet.text = event.target.value
           onChange(nextSet)
         }}
+        onKeyDown={(event) => checkCaret(event.target)}
+        onClick={(event) => checkCaret(event.target)}
       />
       <Box flex={false}>
         <TextInput

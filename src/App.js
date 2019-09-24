@@ -301,7 +301,9 @@ const App = () => {
         {(responsiveSize) => (
           <Box fill>
             <Box flex direction="row">
-              {edit && <Editor set={set} onChange={onChange} />}
+              {edit && (
+                <Editor set={set} onChange={onChange} setCurrent={setCurrent} />
+              )}
               <Keyboard
                 onLeft={onPrevious}
                 onRight={onNext}
