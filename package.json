@@ -11,12 +11,20 @@
     "react-scripts": "3.1.1",
     "styled-components": "^4.2.0"
   },
+  "devDependencies": {
+    "prettier": "^1.18.2",
+    "prettier-quick": "^0.0.5"
+  },
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "prettier": "pretty-quick --staged"
   },
+  "pre-commit": [
+    "prettier"
+  ],
   "eslintConfig": {
     "extends": "react-app"
   },
