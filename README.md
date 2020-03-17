@@ -2,7 +2,7 @@
 
 A tool to create and show slide presentations.
 
-Live at: [slide.grommet.io](https://slide.grommet.io)
+Live at: [slides.grommet.io](https://slides.grommet.io)
 
 ## Reference
 
@@ -16,10 +16,10 @@ before the next slide, a background image will be automatcailly provided.
 
 ### Command shortcuts
 
-* **command-e** or **windows-E**: toggles view vs. edit modes
-* **ArrowLeft** and **ArrowRight**: previous and next slide
-* **1-9**: jump to slide at numbered position
-* **Shift**: toggles full screen
+- **command-e** or **windows-E**: toggles view vs. edit modes
+- **ArrowLeft** and **ArrowRight**: previous and next slide
+- **1-9**: jump to slide at numbered position
+- **Shift**: toggles full screen
 
 ### Saving
 
