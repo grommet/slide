@@ -74,13 +74,13 @@ const Publish = ({ set, onChange }) => {
               window.location.hash,
             ].join('');
             setUploadUrl(nextUploadUrl);
+            nextSet.publishedUrl = nextUploadUrl;
+            onChange(nextSet);
           });
         }
         return response.text().then(setError);
       })
       .catch((e) => setError(e.message));
-
-    onChange(nextSet);
   };
 
   const onCopy = () => {
@@ -90,7 +90,7 @@ const Publish = ({ set, onChange }) => {
   };
 
   return (
-    <Box>
+    <Box flex={false}>
       <Summary
         Icon={CloudUpload}
         label="Publish"
@@ -145,7 +145,7 @@ const Publish = ({ set, onChange }) => {
         </Fragment>
       )}
       {set.date && (
-        <Box>
+        <Box margin={{ top: 'medium' }}>
           <Text size="small" color="text-xweak">
             Last published {new Date(set.date).toLocaleString()}
           </Text>
