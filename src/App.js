@@ -306,6 +306,8 @@ const App = () => {
               <Keyboard
                 onLeft={onPrevious}
                 onRight={onNext}
+                onUp={onPrevious}
+                onDown={onNext}
                 onShift={toggleFullscreen}
                 onEsc={() => setFullScreen(false)}
                 onKeyDown={({ key, keyCode, metaKey }) => {
