@@ -1,6 +1,6 @@
 import { Box, Button, TextArea, TextInput } from 'grommet';
 import { Apps, Share as ShareIcon } from 'grommet-icons';
-import React from 'react';
+import React, { useCallback } from 'react';
 import Manage from './Manage';
 import Share from './Share';
 import { characterToSlideIndex } from './slide';
@@ -9,7 +9,34 @@ const Editor = ({ set, onChange, setCurrent }) => {
   const [manage, setManage] = React.useState();
   const [share, setShare] = React.useState();
 
-  const checkCaret = node => {
+  const updateName = useCallback(
+    (event) => {
+      const nextSet = JSON.parse(JSON.stringify(set));
+      nextSet.name = event.target.value;
+      onChange(nextSet);
+    },
+    [onChange, set],
+  );
+
+  const updateText = useCallback(
+    (event) => {
+      const nextSet = JSON.parse(JSON.stringify(set));
+      nextSet.text = event.target.value;
+      onChange(nextSet);
+    },
+    [onChange, set],
+  );
+
+  const updateTheme = useCallback(
+    (event) => {
+      const nextSet = JSON.parse(JSON.stringify(set));
+      nextSet.theme = event.target.value;
+      onChange(nextSet);
+    },
+    [onChange, set],
+  );
+
+  const checkCaret = (node) => {
     setCurrent(characterToSlideIndex(set.text, node.selectionStart));
   };
 
@@ -23,11 +50,7 @@ const Editor = ({ set, onChange, setCurrent }) => {
         />
         <TextInput
           value={set.name || ''}
-          onChange={event => {
-            const nextSet = JSON.parse(JSON.stringify(set));
-            nextSet.name = event.target.value;
-            onChange(nextSet);
-          }}
+          onChange={updateName}
           onBlur={() => {
             // ensure we have the name in our list
             const stored = window.localStorage.getItem('slide-sets');
@@ -47,23 +70,15 @@ const Editor = ({ set, onChange, setCurrent }) => {
       <TextArea
         fill
         value={set.text}
-        onChange={event => {
-          const nextSet = JSON.parse(JSON.stringify(set));
-          nextSet.text = event.target.value;
-          onChange(nextSet);
-        }}
-        onKeyDown={event => checkCaret(event.target)}
-        onClick={event => checkCaret(event.target)}
+        onChange={updateText}
+        onKeyDown={(event) => checkCaret(event.target)}
+        onClick={(event) => checkCaret(event.target)}
       />
       <Box flex={false}>
         <TextInput
           placeholder="published theme"
           value={set.theme || ''}
-          onChange={event => {
-            const nextSet = JSON.parse(JSON.stringify(set));
-            nextSet.theme = event.target.value;
-            onChange(nextSet);
-          }}
+          onChange={updateTheme}
         />
       </Box>
       {manage && <Manage setSet={onChange} onClose={() => setManage(false)} />}

@@ -1,35 +1,46 @@
 import {
-  Box, Button, Form, FormField, Grid, Heading, Layer, MaskedInput,
-  Paragraph, Text, TextInput,
-} from 'grommet'
-import { Close, CloudUpload, Copy } from 'grommet-icons'
-import React, { Fragment } from 'react'
-import { apiUrl } from './slide'
+  Box,
+  Button,
+  Form,
+  FormField,
+  Grid,
+  Heading,
+  Layer,
+  MaskedInput,
+  Paragraph,
+  Text,
+  TextInput,
+} from 'grommet';
+import { Close, CloudUpload, Copy } from 'grommet-icons';
+import React, { Fragment } from 'react';
+import { apiUrl } from './slide';
 
 const Summary = ({ Icon, label, guidance }) => (
   <Box align="center" gap="small" margin={{ top: 'medium' }}>
     <Icon size="large" />
-    <Heading level={3} margin="none">{label}</Heading>
+    <Heading level={3} margin="none">
+      {label}
+    </Heading>
     <Paragraph textAlign="center">{guidance}</Paragraph>
   </Box>
-)
+);
 
 const Publish = ({ set, onChange }) => {
-  const [publication, setPublication] = React.useState()
-  const [uploadUrl, setUploadUrl] = React.useState()
-  const [message, setMessage] = React.useState()
-  const [error, setError] = React.useState()
-  const inputRef = React.useRef()
+  const [publication, setPublication] = React.useState();
+  const [uploadUrl, setUploadUrl] = React.useState();
+  const [message, setMessage] = React.useState();
+  const [error, setError] = React.useState();
+  const inputRef = React.useRef();
 
   React.useEffect(() => {
-    const stored = localStorage.getItem('identity')
+    const stored = localStorage.getItem('identity');
     if (stored) {
-      const identity = JSON.parse(stored)
-      setPublication({ ...identity, name: set.name })
+      const identity = JSON.parse(stored);
+      setPublication({ ...identity, name: set.name });
     } else {
-      setPublication({ name: set.name })
+      setPublication({ name: set.name });
     }
-  }, [set])
+  }, [set]);
 
   const onPublish = ({ value: { email, pin } }) => {
     // remember email and pin in local storage so we can use later
@@ -51,11 +62,10 @@ const Publish = ({ set, onChange }) => {
       },
       body,
     })
-    .then((response) => {
-      if (response.ok) {
-        setError(undefined);
-        return response.text()
-          .then(id => {
+      .then((response) => {
+        if (response.ok) {
+          setError(undefined);
+          return response.text().then((id) => {
             const nextUploadUrl = [
               window.location.protocol,
               window.location.host,
@@ -65,28 +75,32 @@ const Publish = ({ set, onChange }) => {
             ].join('');
             setUploadUrl(nextUploadUrl);
           });
-      }
-      return response.text().then(setError);
-    })
-    .catch(e => setError(e.message));
+        }
+        return response.text().then(setError);
+      })
+      .catch((e) => setError(e.message));
 
     onChange(nextSet);
-  }
+  };
 
   const onCopy = () => {
     inputRef.current.select();
     document.execCommand('copy');
     setMessage('copied to clipboard!');
-  }
+  };
 
   return (
     <Box>
-      <Summary Icon={CloudUpload} label="Publish" guidance={`
+      <Summary
+        Icon={CloudUpload}
+        label="Publish"
+        guidance={`
         Publishing your design will generate a URL
         that you can send to others so they can see it.
         We use your email and PIN # so nobody else can modify your copy.
         They will be able to create their own design based on it.
-      `} />
+      `}
+      />
       <Form value={publication} onSubmit={onPublish}>
         <FormField
           name="email"
@@ -130,18 +144,26 @@ const Publish = ({ set, onChange }) => {
           </Box>
         </Fragment>
       )}
+      {set.date && (
+        <Box>
+          <Text size="small" color="text-xweak">
+            Last published {new Date(set.date).toLocaleString()}
+          </Text>
+          {set.publishedUrl && (
+            <Text size="small" color="text-xweak">
+              {set.publishedUrl}
+            </Text>
+          )}
+        </Box>
+      )}
     </Box>
   );
 };
 
 const Share = ({ set, onChange, onClose }) => {
   return (
-    <Layer
-      position="top"
-      margin="large"
-      onEsc={onClose}
-    >
-      <Box background="dark-1">
+    <Layer position="top" margin="large" onEsc={onClose}>
+      <Box background={{ color: 'background', dark: true }}>
         <Box direction="row" align="center" justify="between">
           <Button icon={<Close />} hoverIndicator onClick={onClose} />
           <Heading
@@ -152,10 +174,14 @@ const Share = ({ set, onChange, onClose }) => {
             share
           </Heading>
         </Box>
-        <Box flex pad={{ horizontal: 'large', bottom: 'large' }} overflow="auto">
+        <Box
+          flex
+          pad={{ horizontal: 'large', bottom: 'large' }}
+          overflow="auto"
+        >
           <Grid
             fill="horizontal"
-            columns={{ count: 'fit', size: "small" }}
+            columns={{ count: 'fit', size: 'small' }}
             gap="large"
           >
             <Publish set={set} onChange={onChange} />
@@ -163,7 +189,7 @@ const Share = ({ set, onChange, onClose }) => {
         </Box>
       </Box>
     </Layer>
-  )
-}
+  );
+};
 
-export default Share
+export default Share;

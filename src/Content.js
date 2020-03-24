@@ -1,10 +1,10 @@
 import { Box, Markdown, Paragraph } from 'grommet';
 import React from 'react';
 
-const LightBox = props => (
+const LightBox = (props) => (
   <Box
     pad={{ horizontal: 'xlarge' }}
-    background={{ color: 'dark-3', opacity: 'medium' }}
+    background={{ color: 'background', dark: false, opacity: 'medium' }}
     justify="center"
     round="small"
     {...props}
