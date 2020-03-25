@@ -237,17 +237,18 @@ const App = () => {
     };
   }, [onNext, onPrevious]);
 
-  const onChange = useCallback((nextSet) => {
-    setSet(nextSet);
+  const onChange = useCallback((nextSet) => setSet(nextSet), []);
+
+  useEffect(() => {
     const timer = setTimeout(() => {
-      window.localStorage.setItem(nextSet.name, JSON.stringify(nextSet));
+      window.localStorage.setItem(set.name, JSON.stringify(set));
       // ensure this set is first
       const stored = window.localStorage.getItem('slide-sets');
       const sets = stored ? JSON.parse(stored) : [];
-      const index = sets.indexOf(nextSet.name);
+      const index = sets.indexOf(set.name);
       if (index !== 0) {
         if (index > 0) sets.splice(index, 1);
-        sets.unshift(nextSet.name);
+        sets.unshift(set.name);
         window.localStorage.setItem('slide-sets', JSON.stringify(sets));
       }
       // clear any text in the browser location when editing
@@ -256,7 +257,7 @@ const App = () => {
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, []);
+  }, [set]);
 
   const toggleFullscreen = () => {
     if (!fullScreen) {

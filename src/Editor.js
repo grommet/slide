@@ -4,12 +4,8 @@ import React, { useState, useEffect } from 'react';
 import Manage from './Manage';
 import Share from './Share';
 import { characterToSlideIndex } from './slide';
-import useDebounce from './useDebounce';
 
 const Editor = ({ set, onChange, setCurrent }) => {
-  const [name, setName] = useDebounce(set, 'name', onChange);
-  const [text, setText] = useDebounce(set, 'text', onChange);
-  const [theme, setTheme] = useDebounce(set, 'theme', onChange);
   const [manage, setManage] = useState();
   const [share, setShare] = useState();
 
@@ -18,13 +14,13 @@ const Editor = ({ set, onChange, setCurrent }) => {
       // ensure we have the name in our list
       const stored = window.localStorage.getItem('slide-sets');
       const sets = stored ? JSON.parse(stored) : [];
-      if (sets.indexOf(name) === -1) {
-        sets.unshift(name);
+      if (sets.indexOf(set.name) === -1) {
+        sets.unshift(set.name);
         window.localStorage.setItem('slide-sets', JSON.stringify(sets));
       }
     }, 2000);
     return () => clearTimeout(timer);
-  }, [name]);
+  }, [set.name]);
 
   const checkCaret = (node) => {
     setCurrent(characterToSlideIndex(set.text, node.selectionStart));
@@ -39,8 +35,12 @@ const Editor = ({ set, onChange, setCurrent }) => {
           onClick={() => setManage(!manage)}
         />
         <TextInput
-          value={name}
-          onChange={(event) => setName(event.target.value)}
+          value={set.name}
+          onChange={(event) => {
+            const nextSet = JSON.parse(JSON.stringify(set));
+            nextSet.name = event.target.value;
+            onChange(nextSet);
+          }}
         />
         <Button
           icon={<ShareIcon />}
@@ -50,16 +50,24 @@ const Editor = ({ set, onChange, setCurrent }) => {
       </Box>
       <TextArea
         fill
-        value={text}
-        onChange={(event) => setText(event.target.value)}
+        value={set.text}
+        onChange={(event) => {
+          const nextSet = JSON.parse(JSON.stringify(set));
+          nextSet.text = event.target.value;
+          onChange(nextSet);
+        }}
         onKeyDown={(event) => checkCaret(event.target)}
         onClick={(event) => checkCaret(event.target)}
       />
       <Box flex={false}>
         <TextInput
           placeholder="published theme"
-          value={theme}
-          onChange={(event) => setTheme(event.target.value)}
+          value={set.theme}
+          onChange={(event) => {
+            const nextSet = JSON.parse(JSON.stringify(set));
+            nextSet.theme = event.target.value;
+            onChange(nextSet);
+          }}
         />
       </Box>
       {manage && <Manage setSet={onChange} onClose={() => setManage(false)} />}
