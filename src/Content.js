@@ -15,6 +15,7 @@ const Content = ({ image, index, slide }) => {
   // if second line of slide is an image, make it the background,
   // and remove from markdown content
   const lines = slide.split('\n');
+  const nonBlankLines = lines.filter((line) => line && line[0] !== '!');
   const secondLine = lines[1] || '';
   const match = secondLine.match(/^!\[.*\]\((.+)\)$/);
   let content = slide;
@@ -28,10 +29,17 @@ const Content = ({ image, index, slide }) => {
     lines.splice(0, 1);
     content = lines.join('\n');
   }
+  const last = lines.length - 1;
+  let footer;
+  if (last > 1 && !lines[last - 2] && !lines[last - 1]) {
+    footer = lines[last] + '\n';
+    lines.splice(last - 2, 3);
+    content = lines.join('\n');
+  }
 
   // base the size on the number of lines
-  const headingSize = lines.length < 5 ? 'xlarge' : 'large';
-  const textSize = lines.length < 5 ? 'xxlarge' : 'xlarge';
+  const headingSize = nonBlankLines.length < 5 ? 'xlarge' : 'large';
+  const textSize = nonBlankLines.length < 5 ? 'xxlarge' : 'xlarge';
   const textAlign = slide.indexOf('\n') === -1 ? 'center' : 'start';
   const components = {
     h1: { props: { textAlign, size: headingSize } },
@@ -50,15 +58,27 @@ const Content = ({ image, index, slide }) => {
     content = <LightBox>{content}</LightBox>;
   }
 
+  const footerComponents = {
+    p: { props: { textAlign, size: textSize, margin: 'none' } },
+  };
+
   return (
     <Box
       fill
-      pad="xlarge"
       background={background}
-      justify="center"
+      justify={footer ? 'between' : 'center'}
       align={backgroundImage ? 'center' : undefined}
     >
-      {content}
+      <Box pad="xlarge">{content}</Box>
+      {footer && (
+        <Box
+          alignSelf="stretch"
+          background={{ color: 'background', dark: true }}
+          pad="medium"
+        >
+          <Markdown components={footerComponents}>{footer}</Markdown>
+        </Box>
+      )}
     </Box>
   );
 };
