@@ -4,14 +4,14 @@ import React from 'react';
 const LightBox = (props) => (
   <Box
     pad={{ horizontal: 'xlarge' }}
-    background={{ color: 'background', dark: false, opacity: 'medium' }}
+    background={{ color: 'background', dark: true, opacity: 'strong' }}
     justify="center"
     round="small"
     {...props}
   />
 );
 
-const Content = ({ image, index, slide }) => {
+const Content = ({ image, index, slide, theme }) => {
   // if second line of slide is an image, make it the background,
   // and remove from markdown content
   const lines = slide.split('\n');
@@ -55,7 +55,16 @@ const Content = ({ image, index, slide }) => {
 
   const backgroundImage = background.slice(0, 4) === 'url(';
   if (backgroundImage) {
-    content = <LightBox>{content}</LightBox>;
+    content = (
+      <LightBox
+        alignSelf={lines[0].endsWith(' ') ? 'start' : undefined}
+        round={(theme && theme.rounding && `${theme.rounding}px`) || 'small'}
+      >
+        {content}
+      </LightBox>
+    );
+  } else {
+    content = <Box pad="xlarge">{content}</Box>;
   }
 
   const footerComponents = {
@@ -69,7 +78,7 @@ const Content = ({ image, index, slide }) => {
       justify={footer ? 'between' : 'center'}
       align={backgroundImage ? 'center' : undefined}
     >
-      <Box pad="xlarge">{content}</Box>
+      {content}
       {footer && (
         <Box
           alignSelf="stretch"

@@ -335,6 +335,7 @@ const App = () => {
                       image={images[current]}
                       index={current}
                       slide={slides[current]}
+                      theme={theme}
                     />
                   ) : (
                     <Box flex align="center" justify="center" animation="pulse">
