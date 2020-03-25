@@ -1,6 +1,6 @@
-import { Box, Button, Grid, Heading, Layer, Text } from 'grommet';
-import { Add, Close } from 'grommet-icons';
-import React from 'react';
+import { Box, Button, Grid, Heading, Layer, Stack, Text } from 'grommet';
+import { Add, Close, Trash } from 'grommet-icons';
+import React, { useEffect, useState } from 'react';
 
 const nameToBackground = (name) => {
   let num = 0;
@@ -31,14 +31,21 @@ const Choice = ({ icon, label, onClick }) => (
 );
 
 const Manage = ({ onClose, setSet }) => {
-  const [sets, setSets] = React.useState([]);
+  const [sets, setSets] = useState([]);
+  const [confirmDelete, setConfirmDelete] = useState();
 
-  React.useEffect(() => {
+  useEffect(() => {
     const stored = window.localStorage.getItem('slide-sets');
-    if (stored) {
-      setSets(JSON.parse(stored));
-    }
+    if (stored) setSets(JSON.parse(stored));
   }, []);
+
+  const delet = (name) => {
+    setConfirmDelete(undefined);
+    const nextSets = sets.filter((n) => n !== name);
+    localStorage.setItem('slide-sets', JSON.stringify(nextSets));
+    localStorage.removeItem(name);
+    setSets(nextSets);
+  };
 
   return (
     <Layer position="top" full="horizontal" margin="large" onEsc={onClose}>
@@ -64,18 +71,38 @@ const Manage = ({ onClose, setSet }) => {
               onClose();
             }}
           />
-          {sets.map((set) => (
-            <Choice
-              key={set}
-              label={set}
-              onClick={() => {
-                const stored = window.localStorage.getItem(set);
-                if (stored) {
-                  setSet(JSON.parse(stored));
-                  onClose();
-                }
-              }}
-            />
+          {sets.map((name) => (
+            <Stack key={name} fill anchor="bottom-right">
+              <Choice
+                key={name}
+                label={name}
+                onClick={() => {
+                  const stored = window.localStorage.getItem(name);
+                  if (stored) {
+                    setSet(JSON.parse(stored));
+                    onClose();
+                  }
+                }}
+              />
+              <Box direction="row" gap="small">
+                {confirmDelete === name && (
+                  <Button
+                    title="confirm delete"
+                    icon={<Trash color="status-critical" />}
+                    hoverIndicator
+                    onClick={() => delet(name)}
+                  />
+                )}
+                <Button
+                  title="delete design"
+                  icon={<Trash color="border" />}
+                  hoverIndicator
+                  onClick={() =>
+                    setConfirmDelete(confirmDelete === name ? undefined : name)
+                  }
+                />
+              </Box>
+            </Stack>
           ))}
         </Grid>
       </Box>

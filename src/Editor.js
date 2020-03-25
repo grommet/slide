@@ -1,40 +1,30 @@
 import { Box, Button, TextArea, TextInput } from 'grommet';
 import { Apps, Share as ShareIcon } from 'grommet-icons';
-import React, { useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import Manage from './Manage';
 import Share from './Share';
 import { characterToSlideIndex } from './slide';
+import useDebounce from './useDebounce';
 
 const Editor = ({ set, onChange, setCurrent }) => {
-  const [manage, setManage] = React.useState();
-  const [share, setShare] = React.useState();
+  const [name, setName] = useDebounce(set, 'name', onChange);
+  const [text, setText] = useDebounce(set, 'text', onChange);
+  const [theme, setTheme] = useDebounce(set, 'theme', onChange);
+  const [manage, setManage] = useState();
+  const [share, setShare] = useState();
 
-  const updateName = useCallback(
-    (event) => {
-      const nextSet = JSON.parse(JSON.stringify(set));
-      nextSet.name = event.target.value;
-      onChange(nextSet);
-    },
-    [onChange, set],
-  );
-
-  const updateText = useCallback(
-    (event) => {
-      const nextSet = JSON.parse(JSON.stringify(set));
-      nextSet.text = event.target.value;
-      onChange(nextSet);
-    },
-    [onChange, set],
-  );
-
-  const updateTheme = useCallback(
-    (event) => {
-      const nextSet = JSON.parse(JSON.stringify(set));
-      nextSet.theme = event.target.value;
-      onChange(nextSet);
-    },
-    [onChange, set],
-  );
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      // ensure we have the name in our list
+      const stored = window.localStorage.getItem('slide-sets');
+      const sets = stored ? JSON.parse(stored) : [];
+      if (sets.indexOf(name) === -1) {
+        sets.unshift(name);
+        window.localStorage.setItem('slide-sets', JSON.stringify(sets));
+      }
+    }, 2000);
+    return () => clearTimeout(timer);
+  }, [name]);
 
   const checkCaret = (node) => {
     setCurrent(characterToSlideIndex(set.text, node.selectionStart));
@@ -49,17 +39,8 @@ const Editor = ({ set, onChange, setCurrent }) => {
           onClick={() => setManage(!manage)}
         />
         <TextInput
-          value={set.name || ''}
-          onChange={updateName}
-          onBlur={() => {
-            // ensure we have the name in our list
-            const stored = window.localStorage.getItem('slide-sets');
-            const sets = stored ? JSON.parse(stored) : [];
-            if (sets.indexOf(set.name) === -1) {
-              sets.unshift(set.name);
-              window.localStorage.setItem('slide-sets', JSON.stringify(sets));
-            }
-          }}
+          value={name}
+          onChange={(event) => setName(event.target.value)}
         />
         <Button
           icon={<ShareIcon />}
@@ -69,16 +50,16 @@ const Editor = ({ set, onChange, setCurrent }) => {
       </Box>
       <TextArea
         fill
-        value={set.text}
-        onChange={updateText}
+        value={text}
+        onChange={(event) => setText(event.target.value)}
         onKeyDown={(event) => checkCaret(event.target)}
         onClick={(event) => checkCaret(event.target)}
       />
       <Box flex={false}>
         <TextInput
           placeholder="published theme"
-          value={set.theme || ''}
-          onChange={updateTheme}
+          value={theme}
+          onChange={(event) => setTheme(event.target.value)}
         />
       </Box>
       {manage && <Manage setSet={onChange} onClose={() => setManage(false)} />}
