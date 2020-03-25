@@ -31,6 +31,7 @@ const App = () => {
   const [images, setImages] = React.useState([]);
   const [theme, setTheme] = React.useState();
   const [edit, setEdit] = React.useState(false);
+  const [changed, setChanged] = React.useState();
   const [slides, setSlides] = React.useState();
   const [fullScreen, setFullScreen] = React.useState();
   const viewerRef = React.useRef();
@@ -78,6 +79,8 @@ const App = () => {
       );
     } else if (slides && current > slides.length - 1) {
       setCurrent(slides.length - 1);
+    } else if (slides && current === undefined) {
+      setCurrent(0);
     }
   }, [current, slides]);
 
@@ -137,12 +140,9 @@ const App = () => {
     setImages(nextImages);
   }, [slides]);
 
-  const loadTimer = React.useRef();
-
   // lazily load
   useEffect(() => {
-    clearTimeout(loadTimer.current);
-    loadTimer.current = setTimeout(() => {
+    const timer = setTimeout(() => {
       images.forEach((image, index) => {
         if (image && !image.startsWith('url(')) {
           fetch(
@@ -168,7 +168,7 @@ const App = () => {
         }
       });
     }, 5000); // 5s empircally determined
-    return () => clearTimeout(loadTimer.current);
+    return () => clearTimeout(timer);
   }, [images]);
 
   useEffect(
@@ -237,27 +237,33 @@ const App = () => {
     };
   }, [onNext, onPrevious]);
 
-  const onChange = useCallback((nextSet) => setSet(nextSet), []);
+  const onChange = useCallback((nextSet) => {
+    setChanged(true);
+    setSet(nextSet);
+  }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      window.localStorage.setItem(set.name, JSON.stringify(set));
-      // ensure this set is first
-      const stored = window.localStorage.getItem('slide-sets');
-      const sets = stored ? JSON.parse(stored) : [];
-      const index = sets.indexOf(set.name);
-      if (index !== 0) {
-        if (index > 0) sets.splice(index, 1);
-        sets.unshift(set.name);
-        window.localStorage.setItem('slide-sets', JSON.stringify(sets));
-      }
-      // clear any text in the browser location when editing
-      if (window.location.search) {
-        window.history.pushState(null, '', '/');
-      }
-    }, 1000);
-    return () => clearTimeout(timer);
-  }, [set]);
+    if (changed) {
+      const timer = setTimeout(() => {
+        window.localStorage.setItem(set.name, JSON.stringify(set));
+        // ensure this set is first
+        const stored = window.localStorage.getItem('slide-sets');
+        const sets = stored ? JSON.parse(stored) : [];
+        const index = sets.indexOf(set.name);
+        if (index !== 0) {
+          if (index > 0) sets.splice(index, 1);
+          sets.unshift(set.name);
+          window.localStorage.setItem('slide-sets', JSON.stringify(sets));
+        }
+        // clear any text in the browser location when editing
+        if (window.location.search) {
+          window.history.pushState(null, '', '/');
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [changed, set]);
 
   const toggleFullscreen = () => {
     if (!fullScreen) {
@@ -299,7 +305,7 @@ const App = () => {
         {(responsiveSize) => (
           <Box fill>
             <Box flex direction="row">
-              {edit && (
+              {edit && set && (
                 <Editor set={set} onChange={onChange} setCurrent={setCurrent} />
               )}
               <Keyboard
