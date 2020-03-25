@@ -103,7 +103,7 @@ const App = () => {
         setTheme(undefined);
       }
     }
-    if (set) priorSlidesRef.current = set.theme;
+    if (set) priorThemeRef.current = set.theme;
   }, [set]);
 
   // set current to the slide being edited
