@@ -127,7 +127,7 @@ const App = () => {
     const nextImages = [];
     slides &&
       slides.forEach((s, i) => {
-        const match = s.match(/^# (\w+)\s*$/);
+        const match = s.match(/^#\s+(\w+)\s*$/);
         if (match) {
           const name = match[1];
           nextImages[i] =

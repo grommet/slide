@@ -55,9 +55,12 @@ const Content = ({ image, index, slide, theme }) => {
 
   const backgroundImage = background.slice(0, 4) === 'url(';
   if (backgroundImage) {
+    let alignSelf;
+    if (lines[0].endsWith(' ')) alignSelf = 'start';
+    else if (lines[0].startsWith('#  ')) alignSelf = 'end';
     content = (
       <LightBox
-        alignSelf={lines[0].endsWith(' ') ? 'start' : undefined}
+        alignSelf={alignSelf}
         round={(theme && theme.rounding && `${theme.rounding}px`) || 'small'}
       >
         {content}
