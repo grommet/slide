@@ -27,7 +27,7 @@ const createTouch = (event) => {
 
 const App = () => {
   const [set, setSet] = React.useState();
-  const [current, setCurrent] = React.useState(0);
+  const [current, setCurrent] = React.useState();
   const [images, setImages] = React.useState([]);
   const [theme, setTheme] = React.useState();
   const [edit, setEdit] = React.useState(false);
@@ -66,11 +66,20 @@ const App = () => {
     }
     const nextEdit = window.localStorage.getItem('slide-edit');
     if (nextEdit) setEdit(JSON.parse(nextEdit));
-
-    if (window.location.hash) {
-      setCurrent(parseInt(window.location.hash.slice(1), 10));
-    }
   }, []);
+
+  useEffect(() => {
+    if (window.location.hash && slides && current === undefined) {
+      setCurrent(
+        Math.min(
+          parseInt(window.location.hash.slice(1), 10),
+          slides.length - 1,
+        ),
+      );
+    } else if (slides && current > slides.length - 1) {
+      setCurrent(slides.length - 1);
+    }
+  }, [current, slides]);
 
   // set hash when changing current slide
   useEffect(() => {
@@ -320,7 +329,7 @@ const App = () => {
                   }
                 >
                   <Controls justify="between" />
-                  {slides ? (
+                  {slides && slides[current] ? (
                     <Content
                       image={images[current]}
                       index={current}
