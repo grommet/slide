@@ -26,7 +26,7 @@ const Summary = ({ Icon, label, guidance }) => (
 );
 
 const Publish = ({ set, onChange }) => {
-  const [publication, setPublication] = React.useState();
+  const [publication, setPublication] = React.useState({});
   const [uploadUrl, setUploadUrl] = React.useState();
   const [message, setMessage] = React.useState();
   const [error, setError] = React.useState();
@@ -107,23 +107,28 @@ const Publish = ({ set, onChange }) => {
           label="Email"
           required
           validate={{ regexp: /\w+@\w+\.\w+/ }}
-        />
+        >
+          <TextInput name="email" />
+        </FormField>
         <FormField
           name="pin"
           label="PIN"
           required
           validate={{ regexp: /\d{3}/, message: 'three digits' }}
           error={error}
-          component={MaskedInput}
-          type="password"
-          mask={[
-            {
-              length: 3,
-              regexp: /^\d{1,3}$/,
-              placeholder: '###',
-            },
-          ]}
-        />
+        >
+          <MaskedInput
+            name="pin"
+            type="password"
+            mask={[
+              {
+                length: 3,
+                regexp: /^\d{1,3}$/,
+                placeholder: '###',
+              },
+            ]}
+          />
+        </FormField>
         <Box align="center" margin={{ top: 'medium' }}>
           <Button type="submit" label="Publish" />
         </Box>

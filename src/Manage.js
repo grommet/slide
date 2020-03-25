@@ -67,6 +67,7 @@ const Manage = ({ onClose, setSet }) => {
               setSet({
                 name: new Date().toISOString().slice(0, 10),
                 text: '# Welcome',
+                theme: '',
               });
               onClose();
             }}

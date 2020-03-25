@@ -1,7 +1,6 @@
 import { Box, Button, Grommet, Keyboard, ResponsiveContext } from 'grommet';
 import { grommet } from 'grommet/themes';
 import { Edit, Expand, Gremlin, Next, Previous } from 'grommet-icons';
-import LZString from 'lz-string';
 import React, { useCallback, useEffect } from 'react';
 import Content from './Content';
 import Editor from './Editor';
@@ -62,17 +61,7 @@ const App = () => {
           setSet(JSON.parse(storedSet));
         }
       } else {
-        const encodedText =
-          params.t ||
-          window.localStorage.getItem('slides') ||
-          window.localStorage.getItem('text');
-        if (encodedText) {
-          const text = LZString.decompressFromEncodedURIComponent(encodedText);
-          setSet({ text });
-          setSlides(textToSlides(text));
-        } else {
-          setSet({ text: initialText });
-        }
+        setSet({ text: initialText });
       }
     }
     const nextEdit = window.localStorage.getItem('slide-edit');
