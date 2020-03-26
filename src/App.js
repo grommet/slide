@@ -130,9 +130,10 @@ const App = () => {
     const nextImages = [];
     slides &&
       slides.forEach((s, i) => {
-        const match = s.match(/^#\s+(\w+)\s*$/);
+        // allow footer
+        const match = s.match(/^#\s+(\w+)\s*$|^#\s+(\w+)\s*\n\n\n[^\n]+\s*$/);
         if (match) {
-          const name = match[1];
+          const name = match[1] || match[2];
           nextImages[i] =
             window.localStorage.getItem(`slide-image-${name}`) || name;
         }
