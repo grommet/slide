@@ -26,6 +26,7 @@ const createTouch = (event) => {
 };
 
 const App = () => {
+  const responsiveSize = React.useContext(ResponsiveContext);
   const [set, setSet] = React.useState();
   const [current, setCurrent] = React.useState();
   const [images, setImages] = React.useState([]);
@@ -101,9 +102,10 @@ const App = () => {
         const id = set.theme.split('id=')[1];
         fetch(`${themeApiUrl}/${id}`)
           .then((response) => response.json())
-          .then((nextTheme) => setTheme(nextTheme));
+          .then((nextTheme) => setTheme(nextTheme))
+          .catch(() => setTheme(grommet));
       } else {
-        setTheme(undefined);
+        setTheme(grommet);
       }
     }
     if (set) priorThemeRef.current = set.theme;
@@ -301,60 +303,56 @@ const App = () => {
   );
 
   return (
-    <Grommet full theme={theme || grommet}>
-      <ResponsiveContext.Consumer>
-        {(responsiveSize) => (
-          <Box fill>
-            <Box flex direction="row">
-              {edit && set && (
-                <Editor set={set} onChange={onChange} setCurrent={setCurrent} />
-              )}
-              <Keyboard
-                onLeft={onPrevious}
-                onRight={onNext}
-                onUp={onPrevious}
-                onDown={onNext}
-                onShift={toggleFullscreen}
-                onEsc={() => setFullScreen(false)}
-                onKeyDown={({ key, keyCode, metaKey }) => {
-                  const nextCurrent = keyCode - 49;
-                  if (nextCurrent >= 0 && nextCurrent <= slides.length - 1) {
-                    setCurrent(nextCurrent);
-                  }
-                  if (key === 'e' && metaKey) {
-                    setEdit(!edit);
-                  }
-                }}
-              >
-                <Box
-                  ref={viewerRef}
-                  tabIndex="-1"
-                  fill={fullScreen}
-                  flex
-                  overflow="hidden"
-                  direction={
-                    responsiveSize === 'small' ? 'column-reverse' : 'column'
-                  }
-                >
-                  <Controls justify="between" />
-                  {slides && slides[current] ? (
-                    <Content
-                      image={images[current]}
-                      index={current}
-                      slide={slides[current]}
-                      theme={theme}
-                    />
-                  ) : (
-                    <Box flex align="center" justify="center" animation="pulse">
-                      <Gremlin size="large" />
-                    </Box>
-                  )}
+    <Grommet full theme={theme}>
+      <Box fill>
+        <Box flex direction="row">
+          {edit && set && (
+            <Editor set={set} onChange={onChange} setCurrent={setCurrent} />
+          )}
+          <Keyboard
+            onLeft={onPrevious}
+            onRight={onNext}
+            onUp={onPrevious}
+            onDown={onNext}
+            onShift={toggleFullscreen}
+            onEsc={() => setFullScreen(false)}
+            onKeyDown={({ key, keyCode, metaKey }) => {
+              const nextCurrent = keyCode - 49;
+              if (nextCurrent >= 0 && nextCurrent <= slides.length - 1) {
+                setCurrent(nextCurrent);
+              }
+              if (key === 'e' && metaKey) {
+                setEdit(!edit);
+              }
+            }}
+          >
+            <Box
+              ref={viewerRef}
+              tabIndex="-1"
+              fill={fullScreen}
+              flex
+              overflow="hidden"
+              direction={
+                responsiveSize === 'small' ? 'column-reverse' : 'column'
+              }
+            >
+              <Controls justify="between" />
+              {slides && slides[current] && theme ? (
+                <Content
+                  image={images[current]}
+                  index={current}
+                  slide={slides[current]}
+                  theme={theme}
+                />
+              ) : (
+                <Box flex align="center" justify="center" animation="pulse">
+                  <Gremlin size="large" />
                 </Box>
-              </Keyboard>
+              )}
             </Box>
-          </Box>
-        )}
-      </ResponsiveContext.Consumer>
+          </Keyboard>
+        </Box>
+      </Box>
     </Grommet>
   );
 };
