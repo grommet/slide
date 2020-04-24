@@ -1,9 +1,16 @@
 import { Box, Button, Grommet, Keyboard, ResponsiveContext } from 'grommet';
 import { grommet } from 'grommet/themes';
 import { Edit, Expand, Gremlin, Next, Previous } from 'grommet-icons';
-import React, { useCallback, useEffect } from 'react';
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
 import Content from './Content';
 import Editor from './Editor';
+import ConfirmReplace from './ConfirmReplace';
 import { apiUrl, initialText, textToSlides, themeApiUrl } from './slide';
 
 const UNSPLASH_API_KEY = process.env.REACT_APP_UNSPLASH_API_KEY;
@@ -25,28 +32,40 @@ const createTouch = (event) => {
   return undefined;
 };
 
+export const getParams = () => {
+  const { location } = window;
+  const params = {};
+  location.search
+    .slice(1)
+    .split('&')
+    .forEach((p) => {
+      const [k, v] = p.split('=');
+      params[k] = decodeURIComponent(v);
+    });
+  return params;
+};
+
+const setNameParam = (name) => {
+  const search = `?name=${encodeURIComponent(name)}`;
+  const url = window.location.pathname + search;
+  window.history.replaceState(undefined, undefined, url);
+};
+
 const App = () => {
-  const responsiveSize = React.useContext(ResponsiveContext);
-  const [set, setSet] = React.useState();
-  const [current, setCurrent] = React.useState();
-  const [images, setImages] = React.useState([]);
-  const [theme, setTheme] = React.useState();
-  const [edit, setEdit] = React.useState(false);
-  const [changed, setChanged] = React.useState();
-  const [slides, setSlides] = React.useState();
-  const [fullScreen, setFullScreen] = React.useState();
-  const viewerRef = React.useRef();
+  const responsiveSize = useContext(ResponsiveContext);
+  const [set, setSet] = useState();
+  const [current, setCurrent] = useState();
+  const [images, setImages] = useState([]);
+  const [theme, setTheme] = useState();
+  const [edit, setEdit] = useState(false);
+  const [slides, setSlides] = useState();
+  const [confirmReplace, setConfirmReplace] = useState();
+  const [fullScreen, setFullScreen] = useState();
+  const viewerRef = useRef();
 
   // load initial set from URL, or local storage, if any
   useEffect(() => {
-    const params = {};
-    document.location.search
-      .slice(1)
-      .split('&')
-      .forEach((p) => {
-        const [k, v] = p.split('=');
-        params[k] = v;
-      });
+    const params = getParams();
     if (params.id) {
       fetch(`${apiUrl}/${params.id}`)
         .then((response) => response.json())
@@ -70,6 +89,7 @@ const App = () => {
     if (nextEdit) setEdit(JSON.parse(nextEdit));
   }, []);
 
+  // set current, if needed, from hash and within slides
   useEffect(() => {
     if (window.location.hash && slides && current === undefined) {
       setCurrent(
@@ -94,7 +114,7 @@ const App = () => {
   useEffect(() => set && setSlides(textToSlides(set.text)), [set]);
 
   // load theme if needed
-  const priorThemeRef = React.useRef();
+  const priorThemeRef = useRef();
   useEffect(() => {
     if (set && set.theme !== priorThemeRef.current) {
       if (set.theme.slice(0, 6) === 'https:') {
@@ -112,7 +132,7 @@ const App = () => {
   }, [set]);
 
   // set current to the slide being edited
-  const priorSlidesRef = React.useRef();
+  const priorSlidesRef = useRef();
   useEffect(() => {
     if (slides && priorSlidesRef.current) {
       slides.some((s, i) => {
@@ -143,7 +163,7 @@ const App = () => {
     setImages(nextImages);
   }, [slides]);
 
-  // lazily load
+  // lazily load slide images
   useEffect(() => {
     const timer = setTimeout(() => {
       images.forEach((image, index) => {
@@ -160,7 +180,7 @@ const App = () => {
           )
             .then((response) => response.json())
             .then((response) => {
-              if (response.results.length > 0) {
+              if (response.results && response.results.length > 0) {
                 const url = `url(${response.results[0].urls.regular})`;
                 window.localStorage.setItem(`slide-image-${image}`, url);
                 const nextImages = images.slice(0);
@@ -188,6 +208,7 @@ const App = () => {
     current,
   ]);
 
+  // gesture interaction
   useEffect(() => {
     const { addEventListener, removeEventListener } = document;
     let touchStart;
@@ -241,14 +262,20 @@ const App = () => {
   }, [onNext, onPrevious]);
 
   const onChange = useCallback((nextSet) => {
-    setChanged(true);
-    setSet(nextSet);
+    if (nextSet && !nextSet.local && localStorage.getItem(nextSet.name)) {
+      setConfirmReplace(nextSet);
+    } else {
+      if (nextSet) nextSet.local = true;
+      setSet(nextSet);
+    }
   }, []);
 
   useEffect(() => {
-    if (changed) {
+    if (set && set.local) {
       const timer = setTimeout(() => {
         window.localStorage.setItem(set.name, JSON.stringify(set));
+        const params = getParams();
+        if (params.name !== set.name) setNameParam(set.name);
         // ensure this set is first
         const stored = window.localStorage.getItem('slide-sets');
         const sets = stored ? JSON.parse(stored) : [];
@@ -258,15 +285,11 @@ const App = () => {
           sets.unshift(set.name);
           window.localStorage.setItem('slide-sets', JSON.stringify(sets));
         }
-        // clear any text in the browser location when editing
-        if (window.location.search) {
-          window.history.pushState(null, '', '/');
-        }
       }, 1000);
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [changed, set]);
+  }, [set]);
 
   const toggleFullscreen = () => {
     if (!fullScreen) {
@@ -352,6 +375,16 @@ const App = () => {
             </Box>
           </Keyboard>
         </Box>
+        {confirmReplace && (
+          <ConfirmReplace
+            set={set}
+            nextSet={confirmReplace}
+            onDone={(nextSet) => {
+              if (nextSet) setSet(nextSet);
+              setConfirmReplace(undefined);
+            }}
+          />
+        )}
       </Box>
     </Grommet>
   );

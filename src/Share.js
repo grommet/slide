@@ -12,7 +12,7 @@ import {
   TextInput,
 } from 'grommet';
 import { Close, CloudUpload, Copy } from 'grommet-icons';
-import React, { Fragment } from 'react';
+import React, { Fragment, useEffect, useRef, useState } from 'react';
 import { apiUrl } from './slide';
 
 const Summary = ({ Icon, label, guidance }) => (
@@ -26,25 +26,36 @@ const Summary = ({ Icon, label, guidance }) => (
 );
 
 const Publish = ({ set, onChange }) => {
-  const [publication, setPublication] = React.useState({});
-  const [uploadUrl, setUploadUrl] = React.useState();
-  const [message, setMessage] = React.useState();
-  const [error, setError] = React.useState();
-  const inputRef = React.useRef();
+  const [publication, setPublication] = useState({});
+  const [publishing, setPublishing] = useState();
+  const [uploadUrl, setUploadUrl] = useState();
+  const [message, setMessage] = useState();
+  const [error, setError] = useState();
+  const inputRef = useRef();
 
-  React.useEffect(() => {
-    const stored = localStorage.getItem('identity');
+  useEffect(() => {
+    let stored = localStorage.getItem(`${set.name}--identity`);
     if (stored) {
       const identity = JSON.parse(stored);
       setPublication({ ...identity, name: set.name });
     } else {
-      setPublication({ name: set.name });
+      stored = localStorage.getItem('identity');
+      if (stored) {
+        const identity = JSON.parse(stored);
+        setPublication({ ...identity, name: set.name });
+      } else {
+        setPublication({ name: set.name });
+      }
     }
   }, [set]);
 
   const onPublish = ({ value: { email, pin } }) => {
+    setPublishing(true);
     // remember email and pin in local storage so we can use later
-    localStorage.setItem('identity', JSON.stringify({ email, pin }));
+    localStorage.setItem(
+      `${set.name}--identity`,
+      JSON.stringify({ email, pin }),
+    );
 
     // add some metadata to the design
     const nextSet = JSON.parse(JSON.stringify(set));
@@ -52,6 +63,7 @@ const Publish = ({ set, onChange }) => {
     const date = new Date();
     date.setMilliseconds(pin);
     nextSet.date = date.toISOString();
+    delete nextSet.local;
 
     const body = JSON.stringify(nextSet);
     fetch(apiUrl, {
@@ -76,12 +88,15 @@ const Publish = ({ set, onChange }) => {
             ].join('');
             setUploadUrl(nextUploadUrl);
             nextSet.publishedUrl = nextUploadUrl;
+            nextSet.id = id;
+            nextSet.local = true;
             onChange(nextSet);
           });
         }
         return response.text().then(setError);
       })
-      .catch((e) => setError(e.message));
+      .catch((e) => setError(e.message))
+      .then(() => setPublishing(false));
   };
 
   const onCopy = () => {
@@ -131,7 +146,7 @@ const Publish = ({ set, onChange }) => {
           />
         </FormField>
         <Box align="center" margin={{ top: 'medium' }}>
-          <Button type="submit" label="Publish" />
+          <Button type="submit" label="Publish" disabled={publishing} />
         </Box>
       </Form>
       {uploadUrl && (

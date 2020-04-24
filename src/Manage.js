@@ -10,14 +10,14 @@ const nameToBackground = (name) => {
   return `graph-${(num % 4) + 1}`;
 };
 
-const Choice = ({ icon, label, onClick }) => (
+const Choice = ({ href, icon, label, onClick }) => (
   <Box
     fill
     round="small"
     overflow="hidden"
     background={label ? nameToBackground(label) : 'control'}
   >
-    <Button fill hoverIndicator onClick={onClick}>
+    <Button fill hoverIndicator href={href} onClick={onClick}>
       <Box fill pad="small" align="center" justify="center">
         {icon}
         {label && (
@@ -36,7 +36,14 @@ const Manage = ({ onClose, setSet }) => {
 
   useEffect(() => {
     const stored = window.localStorage.getItem('slide-sets');
-    if (stored) setSets(JSON.parse(stored));
+    if (stored) {
+      // prune out non-existing sets
+      const nextSets = JSON.parse(stored).filter((name) =>
+        localStorage.getItem(name),
+      );
+      setSets(nextSets);
+      localStorage.setItem('slide-sets', JSON.stringify(nextSets));
+    }
   }, []);
 
   const delet = (name) => {
@@ -77,11 +84,17 @@ const Manage = ({ onClose, setSet }) => {
               <Choice
                 key={name}
                 label={name}
-                onClick={() => {
-                  const stored = window.localStorage.getItem(name);
-                  if (stored) {
-                    setSet(JSON.parse(stored));
-                    onClose();
+                href={`/?name=${encodeURIComponent(name)}`}
+                onClick={(event) => {
+                  if (!event.ctrlKey && !event.metaKey) {
+                    event.preventDefault();
+                    const stored = window.localStorage.getItem(name);
+                    if (stored) {
+                      const nextSet = JSON.parse(stored);
+                      nextSet.local = true;
+                      setSet(nextSet);
+                      onClose();
+                    }
                   }
                 }}
               />
