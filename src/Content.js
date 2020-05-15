@@ -20,7 +20,7 @@ const Content = ({ image, index, slide }) => {
   const nonBlankLines = lines.filter((line) => line && line[0] !== '!');
   const secondLine = lines[1] || '';
   const matchImage = secondLine.match(/^!\[.*\]\((.+)\)$/);
-  const matchColor = secondLine.match(/^!([\w-]+)$/);
+  const matchColor = secondLine.match(/^!([\w-!]+)$/);
   let content = slide;
   let background = image || `graph-${(index % 3) + 1}`;
   if (matchImage) {
