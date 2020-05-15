@@ -132,6 +132,8 @@ const App = () => {
       } else {
         setTheme(grommet);
       }
+    } else {
+      setTheme(grommet);
     }
     if (set) priorThemeRef.current = set.theme;
   }, [set]);
