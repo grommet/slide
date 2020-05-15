@@ -121,7 +121,7 @@ const App = () => {
   // load theme if needed
   const priorThemeRef = useRef();
   useEffect(() => {
-    if (set && set.theme !== priorThemeRef.current) {
+    if (set && set.theme && set.theme !== priorThemeRef.current) {
       if (set.theme.slice(0, 6) === 'https:') {
         // extract id from URL
         const id = set.theme.split('id=')[1];
