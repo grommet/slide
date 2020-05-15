@@ -1,5 +1,6 @@
 import { Box, Markdown, Paragraph } from 'grommet';
-import React from 'react';
+import React, { useContext } from 'react';
+import { ThemeContext } from 'styled-components';
 
 const LightBox = (props) => (
   <Box
@@ -11,17 +12,23 @@ const LightBox = (props) => (
   />
 );
 
-const Content = ({ image, index, slide, theme }) => {
+const Content = ({ image, index, slide }) => {
+  const theme = useContext(ThemeContext);
   // if second line of slide is an image, make it the background,
   // and remove from markdown content
   const lines = slide.split('\n');
   const nonBlankLines = lines.filter((line) => line && line[0] !== '!');
   const secondLine = lines[1] || '';
-  const match = secondLine.match(/^!\[.*\]\((.+)\)$/);
+  const matchImage = secondLine.match(/^!\[.*\]\((.+)\)$/);
+  const matchColor = secondLine.match(/^!([\w-]+)$/);
   let content = slide;
   let background = image || `graph-${(index % 3) + 1}`;
-  if (match) {
-    background = `url(${match[1]})`;
+  if (matchImage) {
+    background = `url(${matchImage[1]})`;
+    lines.splice(1, 1);
+    content = lines.join('\n');
+  } else if (matchColor && theme.global.colors[matchColor[1]]) {
+    background = matchColor[1];
     lines.splice(1, 1);
     content = lines.join('\n');
   }
