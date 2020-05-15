@@ -73,13 +73,18 @@ const App = () => {
           document.title = set.name;
           setSet(set);
         });
+      // TODO: load from name
     } else {
       const storedSets = window.localStorage.getItem('slide-sets');
       if (storedSets) {
         const sets = JSON.parse(storedSets);
         if (sets[0]) {
           const storedSet = window.localStorage.getItem(sets[0]);
-          setSet(JSON.parse(storedSet));
+          if (storedSet) {
+            setSet(JSON.parse(storedSet));
+          } else {
+            setSet({ text: initialText });
+          }
         }
       } else {
         setSet({ text: initialText });
@@ -344,7 +349,7 @@ const App = () => {
               if (nextCurrent >= 0 && nextCurrent <= slides.length - 1) {
                 setCurrent(nextCurrent);
               }
-              if (key === 'e' && metaKey) {
+              if ((key === '.' || key === 'e') && metaKey) {
                 setEdit(!edit);
               }
             }}
