@@ -26,7 +26,7 @@ const Summary = ({ Icon, label, guidance }) => (
 );
 
 const Publish = ({ set, onChange }) => {
-  const [publication, setPublication] = useState({});
+  const [publication, setPublication] = useState({ email: '', pin: '' });
   const [publishing, setPublishing] = useState();
   const [uploadUrl, setUploadUrl] = useState();
   const [message, setMessage] = useState();
@@ -117,7 +117,7 @@ const Publish = ({ set, onChange }) => {
         They will be able to create their own design based on it.
       `}
       />
-      <Form value={publication} onSubmit={onPublish}>
+      <Form value={publication} onChange={setPublication} onSubmit={onPublish}>
         <FormField
           name="email"
           label="Email"
