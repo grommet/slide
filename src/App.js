@@ -349,7 +349,7 @@ const App = () => {
             onKeyDown={({ key, keyCode, metaKey }) => {
               const nextCurrent = keyCode - 49;
               if (
-                slides.length &&
+                slides &&
                 nextCurrent >= 0 &&
                 nextCurrent <= slides.length - 1
               ) {
