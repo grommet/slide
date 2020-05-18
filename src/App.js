@@ -348,7 +348,11 @@ const App = () => {
             onEsc={() => setFullScreen(false)}
             onKeyDown={({ key, keyCode, metaKey }) => {
               const nextCurrent = keyCode - 49;
-              if (nextCurrent >= 0 && nextCurrent <= slides.length - 1) {
+              if (
+                slides.length &&
+                nextCurrent >= 0 &&
+                nextCurrent <= slides.length - 1
+              ) {
                 setCurrent(nextCurrent);
               }
               if ((key === '.' || key === 'e') && metaKey) {
