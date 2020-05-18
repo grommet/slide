@@ -73,22 +73,15 @@ const App = () => {
           document.title = set.name;
           setSet(set);
         });
-      // TODO: load from name
-    } else {
-      const storedSets = window.localStorage.getItem('slide-sets');
-      if (storedSets) {
-        const sets = JSON.parse(storedSets);
-        if (sets[0]) {
-          const storedSet = window.localStorage.getItem(sets[0]);
-          if (storedSet) {
-            setSet(JSON.parse(storedSet));
-          } else {
-            setSet({ text: initialText });
-          }
-        }
+    } else if (params.name) {
+      const storedSet = window.localStorage.getItem(params.name);
+      if (storedSet) {
+        setSet(JSON.parse(storedSet));
       } else {
-        setSet({ text: initialText });
+        setSet({ name: 'my slides', text: initialText });
       }
+    } else {
+      setSet({ name: 'my slides', text: initialText });
     }
     const nextEdit = window.localStorage.getItem('slide-edit');
     if (nextEdit) setEdit(JSON.parse(nextEdit));
