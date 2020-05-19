@@ -12,7 +12,41 @@ Slides are built
 using [Markdown syntax](https://www.markdownguide.org/basic-syntax).
 Each heading level 1, `#`, starts
 a new slide. If the heading is a single word and there is no other content
-before the next slide, a background image will be automatcailly provided.
+before the next slide, a background image will be automatically provided.
+
+#### background image
+
+By default, a slide that has just a one word heading and nothing else will
+automatically be given a background image associated with that word.
+
+You can set a custom background image by adding a Markdown image,
+`![caption](image-url)` on the line just after the `#` line.
+
+##### text alignment
+
+You can align the text over the image by including an extra space before or
+after the word. So, `# name` will justify name to the left and `# name` will
+justify name to the right.
+
+##### footer text
+
+You can add a footer the the lightbox over the image by leaving two blank
+lines after the `#` and then having a single line of text before the last
+blank line in that slide.
+
+#### background color
+
+By default, a slide without a background image is given a background color
+based on the `graph-*` colors in the theme.
+
+You can set a custom background color by specifying a color name via
+`!color-name` on the line just after the `#` line.
+
+#### text size
+
+Text sizing is automatically scaled based on the amount of text, to a point.
+If you find you need an even smaller text size, you are probably putting too
+much content on the slide.
 
 ### Command shortcuts
 
