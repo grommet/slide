@@ -1,6 +1,6 @@
 import { Box, Button, Grommet, Keyboard, ResponsiveContext } from 'grommet';
 import { grommet } from 'grommet/themes';
-import { Edit, Expand, Gremlin, Next, Previous } from 'grommet-icons';
+import { Down, Edit, Expand, Gremlin, Up } from 'grommet-icons';
 import React, {
   useCallback,
   useContext,
@@ -55,6 +55,7 @@ const App = () => {
   const responsiveSize = useContext(ResponsiveContext);
   const [set, setSet] = useState();
   const [current, setCurrent] = useState();
+  const [previous, setPrevious] = useState(-1);
   const [images, setImages] = useState([]);
   const [theme, setTheme] = useState();
   const [edit, setEdit] = useState(false);
@@ -199,14 +200,19 @@ const App = () => {
     [edit],
   );
 
-  const onNext = useCallback(
-    () => setCurrent(Math.min(current + 1, slides.length - 1)),
-    [current, slides],
-  );
+  const onNext = useCallback(() => {
+    setPrevious(current);
+    // reset so animation works
+    setCurrent(-1);
+    setTimeout(() => setCurrent(Math.min(current + 1, slides.length - 1)), 1);
+  }, [current, slides]);
 
-  const onPrevious = useCallback(() => setCurrent(Math.max(current - 1, 0)), [
-    current,
-  ]);
+  const onPrevious = useCallback(() => {
+    setPrevious(current);
+    // reset so animation works
+    setCurrent(-1);
+    setTimeout(() => setCurrent(Math.max(current - 1, 0)), 1);
+  }, [current]);
 
   // gesture interaction
   useEffect(() => {
@@ -306,7 +312,6 @@ const App = () => {
       direction="row"
       align="center"
       justify={justify || 'between'}
-      background={{ color: 'background', dark: true }}
     >
       <Button icon={<Edit />} hoverIndicator onClick={() => setEdit(!edit)} />
 
@@ -317,8 +322,8 @@ const App = () => {
         align="center"
         background="background-front"
       >
-        <Button icon={<Previous />} hoverIndicator onClick={onPrevious} />
-        <Button icon={<Next />} hoverIndicator onClick={onNext} />
+        <Button icon={<Up />} hoverIndicator onClick={onPrevious} />
+        <Button icon={<Down />} hoverIndicator onClick={onNext} />
       </Box>
 
       <Button icon={<Expand />} hoverIndicator onClick={toggleFullscreen} />
@@ -359,6 +364,7 @@ const App = () => {
               fill={fullScreen}
               flex
               overflow="hidden"
+              background={{ color: 'background', dark: true }}
               direction={
                 responsiveSize === 'small' ? 'column-reverse' : 'column'
               }
@@ -368,10 +374,16 @@ const App = () => {
                 <Content
                   image={images[current]}
                   index={current}
+                  previous={previous}
                   slide={slides[current]}
                 />
               ) : (
-                <Box flex align="center" justify="center" animation="pulse">
+                <Box
+                  flex
+                  align="center"
+                  justify="center"
+                  animation={['fadeIn', 'pulse']}
+                >
                   <Gremlin size="large" />
                 </Box>
               )}

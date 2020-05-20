@@ -48,6 +48,11 @@ Text sizing is automatically scaled based on the amount of text, to a point.
 If you find you need an even smaller text size, you are probably putting too
 much content on the slide.
 
+#### footer
+
+If there is no blank line before the next slide `#` and there are two blank
+lines before it, the last line of text will be placed in a footer.
+
 ### Command shortcuts
 
 - **command-.** or **control-.**: toggles view vs. edit modes

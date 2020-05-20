@@ -1,5 +1,5 @@
 import { Box, Markdown, Paragraph } from 'grommet';
-import React, { useContext } from 'react';
+import React, { useContext, useMemo } from 'react';
 import { ThemeContext } from 'styled-components';
 
 const LightBox = (props) => (
@@ -12,7 +12,7 @@ const LightBox = (props) => (
   />
 );
 
-const Content = ({ image, index, slide }) => {
+const Content = ({ image, index, previous, slide }) => {
   const theme = useContext(ThemeContext);
   // if second line of slide is an image, make it the background,
   // and remove from markdown content
@@ -81,12 +81,21 @@ const Content = ({ image, index, slide }) => {
     p: { props: { textAlign, size: textSize, margin: 'none' } },
   };
 
+  const animation = useMemo(() => {
+    let type;
+    if (index < previous) type = 'slideDown';
+    else if (index > previous) type = 'slideUp';
+    if (type) return ['fadeIn', { type, size: 'large' }];
+    return undefined;
+  }, [index, previous]);
+
   return (
     <Box
       fill
       background={background}
       justify={footer ? 'between' : 'center'}
       align={backgroundImage ? 'center' : undefined}
+      animation={animation}
     >
       {content}
       {footer && (
