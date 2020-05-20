@@ -364,7 +364,7 @@ const App = () => {
               }
             >
               <Controls justify="between" />
-              {slides && slides[current] && theme ? (
+              {slides && slides[current] !== undefined && theme ? (
                 <Content
                   image={images[current]}
                   index={current}
