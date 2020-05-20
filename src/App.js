@@ -306,7 +306,7 @@ const App = () => {
       direction="row"
       align="center"
       justify={justify || 'between'}
-      background={{ color: 'background-back', dark: true }}
+      background={{ color: 'background', dark: true }}
     >
       <Button icon={<Edit />} hoverIndicator onClick={() => setEdit(!edit)} />
 
