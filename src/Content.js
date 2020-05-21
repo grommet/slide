@@ -63,8 +63,8 @@ const Content = ({ image, index, previous, slide }) => {
   const backgroundImage = background.slice(0, 4) === 'url(';
   if (backgroundImage) {
     let alignSelf;
-    if (lines[0].endsWith(' ')) alignSelf = 'start';
-    else if (lines[0].startsWith('#  ')) alignSelf = 'end';
+    if (lines[0] && lines[0].endsWith(' ')) alignSelf = 'start';
+    else if (lines[0] && lines[0].startsWith('#  ')) alignSelf = 'end';
     content = (
       <LightBox
         alignSelf={alignSelf}
