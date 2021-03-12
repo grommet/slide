@@ -5,15 +5,15 @@
   "dependencies": {
     "grommet": "https://github.com/grommet/grommet/tarball/stable",
     "grommet-icons": "https://github.com/grommet/grommet-icons/tarball/stable",
-    "react": "^16.13.0",
-    "react-dom": "^16.13.0",
-    "react-scripts": "3.4.4",
+    "react": "^17.0.1",
+    "react-dom": "^17.0.1",
+    "react-scripts": "4.0.3",
     "styled-components": "^5.0.1"
   },
   "devDependencies": {
     "pre-commit": "^1.2.2",
     "prettier": "^2.0.2",
-    "pretty-quick": "^2.0.1"
+    "pretty-quick": "^3.1.0"
   },
   "scripts": {
     "start": "react-scripts start",
