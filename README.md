@@ -20,7 +20,7 @@ By default, a slide that has just a one word heading and nothing else will
 automatically be given a background image associated with that word.
 
 You can set a custom background image by adding a Markdown image,
-`![caption](image-url)` on the line just after the `#` line.
+`![caption](image-url)` on the line just after the `#` line. The default is for the image to cover the whole background. If instead you want to contain the whole image, just append ` contain` after the image Markdown on the same line. For example: `![caption](image-url) contain`.
 
 ##### text alignment
 
