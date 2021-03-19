@@ -19,12 +19,17 @@ const Content = ({ image, index, previous, slide }) => {
   const lines = slide.split('\n');
   const nonBlankLines = lines.filter((line) => line && line[0] !== '!');
   const secondLine = lines[1] || '';
-  const matchImage = secondLine.match(/^!\[.*\]\((.+)\)$/);
+  const matchImage = secondLine.match(
+    /^!\[.*\]\((.+)\)$|^!\[.*\]\((.+)\) (\w+)$/,
+  );
   const matchColor = secondLine.match(/^!([\w-!]+)$/);
   let content = slide;
   let background = image || `graph-${(index % 3) + 1}`;
+  let backgroundSize;
+  console.log('!!!', secondLine, matchImage);
   if (matchImage) {
-    background = `url(${matchImage[1]})`;
+    background = `url(${matchImage[1] || matchImage[2]})`;
+    if (matchImage[3]) backgroundSize = matchImage[3];
     lines.splice(1, 1);
     content = lines.join('\n');
   } else if (matchColor && theme.global.colors[matchColor[1]]) {
@@ -92,7 +97,11 @@ const Content = ({ image, index, previous, slide }) => {
   return (
     <Box
       fill
-      background={background}
+      background={
+        backgroundSize
+          ? { image: background, size: backgroundSize }
+          : background
+      }
       justify={footer ? 'between' : 'center'}
       align={backgroundImage ? 'center' : undefined}
       animation={animation}
