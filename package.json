@@ -7,7 +7,7 @@
     "grommet-icons": "https://github.com/grommet/grommet-icons/tarball/stable",
     "react": "^17.0.1",
     "react-dom": "^17.0.1",
-    "react-scripts": "4.0.3",
+    "react-scripts": "5.0.0",
     "styled-components": "^5.0.1"
   },
   "devDependencies": {
